@@ -150,6 +150,7 @@ def create_input_channel(runtype, genome_size) {
     } else {
         def meta = [:]
         meta.id = params.sample
+        //meta.id = row.sample
         meta.runtype = runtype
         meta.genome_size = genome_size
         if (runtype == "paired-end") {
