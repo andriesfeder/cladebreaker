@@ -48,6 +48,13 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
+include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
+include { PROKKA                      } from '../modules/nf-core/modules/prokka/main'
+include { ROARY                       } from '../modules/nf-core/modules/roary/main'
+include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
+include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
+
+
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
@@ -74,6 +81,7 @@ workflow CLADEBREAKER {
     //
     // MODULE: Run FastQC
     //
+
     FASTQC (
         INPUT_CHECK.out.reads
     )
