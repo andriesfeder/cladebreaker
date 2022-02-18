@@ -11,7 +11,7 @@ WorkflowCladebreaker.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir, params.force, params.publish_dir_mode]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -54,6 +54,7 @@ include { ROARY                       } from '../modules/nf-core/modules/roary/m
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 
+include { GATHER_SAMPLES              } from '../modules/local/cladebreaker/gather_samples'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -80,16 +81,26 @@ workflow CLADEBREAKER {
 
     //
     // MODULE: Run FastQC
+    // Need to figure out the genome_size, setup_datasets thing to eventually
+    // replace params.genome_size
+
+    GATHER_SAMPLES (
+        INPUT_CHECK.out.reads
+        // , params.genome_size
+    )
+    ch_versions = ch_versions.mix(GATHER_SAMPLES.out.versions)
+    //
+    // MODULE: Run FastQC
     //
 
     FASTQC (
-        INPUT_CHECK.out.reads
+        GATHER_SAMPLES.out.raw_fastq
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
+    // CUSTOM_DUMPSOFTWAREVERSIONS (
+    //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    //)
 
     //
     // MODULE: MultiQC
@@ -101,7 +112,7 @@ workflow CLADEBREAKER {
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+    // ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (
