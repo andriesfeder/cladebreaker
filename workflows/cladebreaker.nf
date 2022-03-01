@@ -11,7 +11,7 @@ WorkflowCladebreaker.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir, params.force, params.publish_dir_mode]
+def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -49,11 +49,13 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
+include { ASSEMBLYSCAN                } from '../modules/nf-core/modules/assemblyscan/main'
 include { PROKKA                      } from '../modules/nf-core/modules/prokka/main'
 include { ROARY                       } from '../modules/nf-core/modules/roary/main'
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 
+include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
 include { GATHER_SAMPLES              } from '../modules/local/cladebreaker/gather_samples'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
@@ -77,30 +79,61 @@ workflow CLADEBREAKER {
     INPUT_CHECK (
         ch_input
     )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
     // MODULE: Run FastQC
     // Need to figure out the genome_size, setup_datasets thing to eventually
     // replace params.genome_size
 
-    GATHER_SAMPLES (
-        INPUT_CHECK.out.reads
+    // GATHER_SAMPLES (
+    //    INPUT_CHECK.out.reads
         // , params.genome_size
-    )
-    ch_versions = ch_versions.mix(GATHER_SAMPLES.out.versions)
+    // )
+
+    //
+    // MODULE: qc-reads
+    //
+    // QC_READS (
+    //    GATHER_SAMPLES.out.raw_fastq
+    // )
+
     //
     // MODULE: Run FastQC
     //
 
     FASTQC (
-        GATHER_SAMPLES.out.raw_fastq
+        INPUT_CHECK.out.reads
     )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    // CUSTOM_DUMPSOFTWAREVERSIONS (
-    //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    //)
+    //
+    // MODULE: Run Shovill
+    //
+
+    SHOVILL (
+        INPUT_CHECK.out.reads
+    )
+
+    ASSEMBLYSCAN (
+        SHOVILL.out.contigs
+    )
+
+
+    /*
+    PROKKA (
+        SHOVILL.out.contigs
+    )*/
+
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    // ch_versions = ch_versions.mix(GATHER_SAMPLES.out.versions.first())
+    // ch_versions = ch_versions.mix(QC_READS.out.versions.first())
+    ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
+    ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
+    // ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+
+     CUSTOM_DUMPSOFTWAREVERSIONS (
+        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    )
 
     //
     // MODULE: MultiQC
@@ -112,11 +145,11 @@ workflow CLADEBREAKER {
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    // ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (
-        ch_multiqc_files.collect()
+         ch_multiqc_files.collect()
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)

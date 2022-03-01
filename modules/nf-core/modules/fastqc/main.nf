@@ -6,9 +6,11 @@ process FASTQC {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
         'quay.io/biocontainers/fastqc:0.11.9--0' }"
+    //TODO: figure out params.publish_dir_mode issue and change mode
+    publishDir "${params.outdir}/${meta.id}/fastqc", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
-    tuple val(meta), path(reads)
+    tuple val(meta), path(reads), path(outdir)
 
     output:
     tuple val(meta), path("*.html"), emit: html
@@ -33,7 +35,7 @@ process FASTQC {
         END_VERSIONS
         """
     } else {
-        """
+        """ 
         [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
         [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
         fastqc $args --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz

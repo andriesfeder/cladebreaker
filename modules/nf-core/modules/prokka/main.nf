@@ -7,6 +7,8 @@ process PROKKA {
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
         'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"
 
+    publishDir "${params.outdir}/${meta.id}/annotation", mode: params.publish_dir_mode, overwrite: params.force
+
     input:
     tuple val(meta), path(fasta)
     path proteins

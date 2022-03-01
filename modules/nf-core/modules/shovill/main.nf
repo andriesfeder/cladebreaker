@@ -1,14 +1,18 @@
 process SHOVILL {
-    tag "$meta.id"
-    label 'process_medium'
+    tag "${meta.id}"
+    // label 'process_medium'
+    label 'process_low'
 
     conda (params.enable_conda ? "bioconda::shovill=1.1.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/shovill:1.1.0--0' :
         'quay.io/biocontainers/shovill:1.1.0--0' }"
 
+    publishDir "${params.outdir}/${meta.id}/assembly", mode: params.publish_dir_mode, overwrite: params.force 
+
     input:
-    tuple val(meta), path(reads)
+    tuple val(meta), path(reads), path(outdir)
+    //, path(extra), path(genome_size)
 
     output:
     tuple val(meta), path("contigs.fa")                         , emit: contigs
