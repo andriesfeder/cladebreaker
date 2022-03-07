@@ -11,7 +11,7 @@ WorkflowCladebreaker.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -56,7 +56,6 @@ include { PIRATE                      } from '../modules/nf-core/modules/pirate/
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
-include { GATHER_SAMPLES              } from '../modules/local/cladebreaker/gather_samples'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -117,11 +116,15 @@ workflow CLADEBREAKER {
         SHOVILL.out.contigs
     )
 
-
-    /*
+    //
+    //MODULE: Run Prokka
+    //
+    
     PROKKA (
-        SHOVILL.out.contigs
-    )*/
+        SHOVILL.out.contigs ,
+        Channel.fromPath( params.proteins ) ,
+        Channel.fromPath( params.prodigal_tf )
+    )
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
@@ -129,7 +132,7 @@ workflow CLADEBREAKER {
     // ch_versions = ch_versions.mix(QC_READS.out.versions.first())
     ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
-    // ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+    ch_versions = ch_versions.mix(PROKKA.out.versions.first())
 
      CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

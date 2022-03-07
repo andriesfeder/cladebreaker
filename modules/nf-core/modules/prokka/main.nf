@@ -2,7 +2,8 @@ process PROKKA {
     tag "$meta.id"
     label 'process_low'
 
-    conda (params.enable_conda ? "bioconda::prokka=1.14.6" : null)
+    //conda (params.enable_conda ? "bioconda::prokka=1.14.6" : null)
+    conda (params.enable_conda ? "bioconda::prokka=1.13" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
         'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"

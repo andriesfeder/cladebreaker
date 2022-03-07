@@ -41,6 +41,16 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                },
+                "proteins": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to Genbank file for use during annotation.  See Prokka documentation for appropriate formatting."
+                },
+                "prodigal_tf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to pretrained prodigal model file for use during annotation.  See Prokka documentation for appropriate formatting."
                 }
             }
         },
