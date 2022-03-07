@@ -1,7 +1,3 @@
-// TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
-//               https://github.com/nf-core/modules/tree/master/modules
-//               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
-//               https://nf-co.re/join
 // TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
@@ -16,7 +12,7 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process WHATSGNU {
-    tag '$bam'
+    tag "$meta.id"
     label 'process_low'
     
     // TODO nf-core: List required Conda package(s).
@@ -28,19 +24,16 @@ process WHATSGNU {
         'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
         'quay.io/biocontainers/YOUR-TOOL-HERE' }"
 
+    publishDir "${params.outdir}/${meta.id}/WhatsGNU", mode: params.publish_dir_mode, overwrite: params.force
+
+
     input:
-    // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
-    //               MUST be provided as an input via a Groovy Map called "meta".
-    //               This information may not be required in some instances e.g. indexing reference genome files:
-    //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
-    // TODO nf-core: Where applicable please provide/convert compressed files as input/output
-    //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    path bam
+    tuple val(mata), path(faa)
+    path database
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    path "*.bam", emit: bam
-    // TODO nf-core: List additional required output channels/values here
+    tuple val(meta), path()
     path "versions.yml"           , emit: versions
 
     script:
@@ -56,15 +49,7 @@ process WHATSGNU {
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
-    samtools \\
-        sort \\
-        $args \\
-        -@ $task.cpus \\
-        $bam
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        whatsgnu: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
-    END_VERSIONS
+    WhatsGNU_main.py \\
+        -d 
     """
 }
