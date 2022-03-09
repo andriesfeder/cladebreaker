@@ -11,7 +11,8 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
-                "input"
+                "input",
+                "db"
             ],
             "properties": {
                 "input": {
@@ -51,6 +52,24 @@
                     "type": "string",
                     "format": "file-path",
                     "description": "Path to pretrained prodigal model file for use during annotation.  See Prokka documentation for appropriate formatting."
+                },
+                "db": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to precompressed WhatsGNU database."
+                },
+                "o": {
+                    "type": "boolean",
+                    "description": "Specifies that precompressed WhatsGNU database is ortholog."
+                },
+                "b": {
+                    "type": "boolean",
+                    "description": "Specifies that precompressed WhatsGNU database is basic."
+                },
+                "topgenomes_count": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Number of topgenomes for WhatsGNU to find."
                 }
             }
         },

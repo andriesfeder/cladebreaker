@@ -11,7 +11,7 @@ WorkflowCladebreaker.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf , params.db ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -55,6 +55,8 @@ include { ROARY                       } from '../modules/nf-core/modules/roary/m
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 
+include { WHATSGNU_MAIN                    } from '../modules/local/whatsgnu/main'
+include { WHATSGNU_GETGENOMES              } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
@@ -121,9 +123,23 @@ workflow CLADEBREAKER {
     //
     
     PROKKA (
-        SHOVILL.out.contigs ,
-        Channel.fromPath( params.proteins ) ,
-        Channel.fromPath( params.prodigal_tf )
+        SHOVILL.out.contigs.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+    )
+
+    //
+    //MODULE: Run WhatsGNU
+    //
+
+    WHATSGNU_MAIN (
+        PROKKA.out.faa.combine(Channel.fromPath( params.db ))
+    )
+
+    //
+    //MODULE: Run WhatsGNU Gather Genomes
+    //
+
+    WHATSGNU_GETGENOMES (
+        WHATSGNU_MAIN.out.topgenomes
     )
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
@@ -133,6 +149,9 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+    ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
+    ch_versions = ch_versions.mix(WHATSGNU_GETGENOMES.out.versions.first())
+
 
      CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

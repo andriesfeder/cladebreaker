@@ -11,45 +11,55 @@
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
 
-process WHATSGNU {
+process WHATSGNU_MAIN {
     tag "$meta.id"
     label 'process_low'
     
-    // TODO nf-core: List required Conda package(s).
-    //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
-    //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "bioconda::whatsgnu=1.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-        'quay.io/biocontainers/YOUR-TOOL-HERE' }"
+        'https://depot.galaxyproject.org/singularity/whatsgnu:1.3--hdfd78af_0':
+        'quay.io/biocontainers/whatsgnu:1.3--hdfd78af_0' }"
 
     publishDir "${params.outdir}/${meta.id}/WhatsGNU", mode: params.publish_dir_mode, overwrite: params.force
 
-
     input:
-    tuple val(mata), path(faa)
-    path database
+    tuple val(meta), path(faa), path(database)
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path()
-    path "versions.yml"           , emit: versions
+    tuple val(meta), path("WhatsGNU_Report/*_WhatsGNU_report.txt"), emit: report
+    tuple val(meta), path("WhatsGNU_Report/*_topgenomes.txt")     , emit: topgenomes
+    tuple val(meta), path("WhatsGNU_Report/*.log")                , emit: log
+    path "versions.yml"                           , emit: versions
 
     script:
     def args = task.ext.args ?: ''
+    prefix   = task.ext.prefix ?: "${meta.id}"
+    mode = ""
+    if ( params.o ) {
+        mode = "-dm ortholog"
+    }
+    if ( params.b ) {
+        mode = "-dm basic"
+    }
     
-    // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
-    //               If the software is unable to output a version number on the command-line then it can be manually specified
-    //               e.g. https://github.com/nf-core/modules/blob/master/modules/homer/annotatepeaks/main.nf
-    //               Each software used MUST provide the software name and version number in the YAML version file (versions.yml)
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
-    // TODO nf-core: If the tool supports multi-threading then you MUST provide the appropriate parameter
-    //               using the Nextflow "task" variable e.g. "--threads $task.cpus"
-    // TODO nf-core: Please replace the example samtools command below with your module's command
-    // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
     WhatsGNU_main.py \\
-        -d 
+        ${args} \\
+        -d ${database} \\
+        ${mode} \\
+        -t \\
+        -o WhatsGNU_Report \\
+        --topgenomes_count ${params.topgenomes_count} \\
+        --force \\
+        ${faa}
+
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        WhatsGNU: \$(echo \$(WhatsGNU_main.py --version 2>&1) | sed 's/^.*WhatsGNU //')
+    END_VERSIONS 
     """
 }
