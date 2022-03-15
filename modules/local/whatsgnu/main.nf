@@ -1,7 +1,7 @@
 // TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
-//               where "task.ext" is a string. 
+//               where "task.ext" is a string.
 //               Any parameters that need to be evaluated in the context of a particular sample
 //               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
 // TODO nf-core: Software that can be piped together SHOULD be added to separate module files
@@ -14,7 +14,7 @@
 process WHATSGNU_MAIN {
     tag "$meta.id"
     label 'process_low'
-    
+
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "bioconda::whatsgnu=1.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -28,10 +28,11 @@ process WHATSGNU_MAIN {
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("WhatsGNU_Report/*_WhatsGNU_report.txt"), emit: report
-    tuple val(meta), path("WhatsGNU_Report/*_topgenomes.txt")     , emit: topgenomes
-    tuple val(meta), path("WhatsGNU_Report/*.log")                , emit: log
-    path "versions.yml"                           , emit: versions
+    tuple val(meta), path("WhatsGNU_Report/*_WhatsGNU_report.txt")  , emit: report
+    tuple val(meta), path("WhatsGNU_Report/*_topgenomes.txt")       , emit: topgenomes
+    tuple val(meta), path("WhatsGNU_Report/${meta.id}_gca_list.txt"), emit: gca_list
+    tuple val(meta), path("WhatsGNU_Report/*.log")                  , emit: log
+    path "versions.yml"                                             , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -43,7 +44,7 @@ process WHATSGNU_MAIN {
     if ( params.b ) {
         mode = "-dm basic"
     }
-    
+
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
     """
     WhatsGNU_main.py \\
@@ -56,10 +57,10 @@ process WHATSGNU_MAIN {
         --force \\
         ${faa}
 
-
+    list_fixer.py WhatsGNU_Report/*_topgenomes.txt WhatsGNU_Report/${meta.id}_gca_list.txt
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         WhatsGNU: \$(echo \$(WhatsGNU_main.py --version 2>&1) | sed 's/^.*WhatsGNU //')
-    END_VERSIONS 
+    END_VERSIONS
     """
 }

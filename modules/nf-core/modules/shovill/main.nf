@@ -11,7 +11,7 @@ process SHOVILL {
     publishDir "${params.outdir}/${meta.id}/assembly", mode: params.publish_dir_mode, overwrite: params.force 
 
     input:
-    tuple val(meta), path(reads), path(outdir)
+    tuple val(meta), path(reads)
     //, path(extra), path(genome_size)
 
     output:
@@ -28,19 +28,33 @@ process SHOVILL {
     script:
     def args = task.ext.args ?: ''
     def memory = task.memory.toGiga()
-    """
-    shovill \\
-        --R1 ${reads[0]} \\
-        --R2 ${reads[1]} \\
-        $args \\
-        --cpus $task.cpus \\
-        --ram $memory \\
-        --outdir ./ \\
-        --force
+    if (meta.assembly) {
+        """
+        cp ${reads[0]} contigs.fa
+        touch shovill.corrections
+        touch shovill.log
+        touch spades.fasta
+        touch contigs.gfa
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+        END_VERSIONS
+        """
+    } else {
+        """
+        shovill \\
+            --R1 ${reads[0]} \\
+            --R2 ${reads[1]} \\
+            $args \\
+            --cpus $task.cpus \\
+            --ram $memory \\
+            --outdir ./ \\
+            --force
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
-    END_VERSIONS
-    """
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+        END_VERSIONS
+        """
+    }
 }

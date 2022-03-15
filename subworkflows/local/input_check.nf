@@ -29,42 +29,53 @@ def create_fastq_channels(LinkedHashMap row) {
     def meta = [:]
     meta.id           = row.sample.replace("_T1","")
     meta.single_end   = row.single_end.toBoolean()
+    meta.assembly     = row.assembly.toBoolean()
 
     if (params.force && file(params.outdir).exists()) {
-            file("${params.outdir}/${meta.id}/fastqs").deleteDir()
+            file("${params.outdir}/${meta.id}/input_data").deleteDir()
         }
 
     String sample = row.sample.toString().replace("_T1","")
     String outdir = "${params.outdir}/${sample}"
-    final File dir = new File("${outdir}/fastqs")
+
+    final File dir = new File("${outdir}/input_data")
     dir.mkdirs()
 
     def array = []
-    if (!file(row.fastq_1).exists()) {
+    if (!file(row.file_1).exists()) {
         exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
     }
-    if (meta.single_end) {
+    if (meta.assembly) {
 
-        Path source = Paths.get(row.fastq_1)
-        Path target = Paths.get("${params.outdir}/${sample}/fastqs/${sample}.fastq.gz")
+        Path source = Paths.get(row.file_1)
+        Path target = Paths.get("${params.outdir}/${sample}/input_data/${sample}.fna")
+
+        Files.copy(source,target)
+
+        array = [meta, [ file(target) ]]
+    }
+    else if (meta.single_end) {
+
+        Path source = Paths.get(row.file_1)
+        Path target = Paths.get("${params.outdir}/${sample}/input_data/${sample}.fastq.gz")
 
         Files.copy(source, target)
 
-        array = [ meta, [ file(target) ], file(outdir) ]
+        array = [ meta, [ file(target) ]]
     } else {
-        if (!file(row.fastq_2).exists()) {
+        if (!file(row.file_2).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
         }
 
-        Path source1 = Paths.get(row.fastq_1)
-        Path source2 = Paths.get(row.fastq_2)
-        Path target1 = Paths.get("${params.outdir}/${sample}/fastqs/${sample}_R1.fastq.gz")
-        Path target2 = Paths.get("${params.outdir}/${sample}/fastqs/${sample}_R2.fastq.gz")
+        Path source1 = Paths.get(row.file_1)
+        Path source2 = Paths.get(row.file_2)
+        Path target1 = Paths.get("${params.outdir}/${sample}/input_data/${sample}_R1.fastq.gz")
+        Path target2 = Paths.get("${params.outdir}/${sample}/input_data/${sample}_R2.fastq.gz")
 
         Files.copy(source1, target1)
         Files.copy(source2, target2)
 
-        array = [ meta, [ file(target1), file(target2) ], file(outdir) ]
+        array = [ meta, [ file(target1), file(target2) ]]
     }
     return array
 }

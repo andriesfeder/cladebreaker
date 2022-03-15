@@ -54,6 +54,7 @@ include { PROKKA                      } from '../modules/nf-core/modules/prokka/
 include { ROARY                       } from '../modules/nf-core/modules/roary/main'
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
+include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigenomedownload/main'
 
 include { WHATSGNU_MAIN                    } from '../modules/local/whatsgnu/main'
 include { WHATSGNU_GETGENOMES              } from '../modules/local/whatsgnu/getgenomes'
@@ -121,7 +122,7 @@ workflow CLADEBREAKER {
     //
     //MODULE: Run Prokka
     //
-    
+
     PROKKA (
         SHOVILL.out.contigs.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     )
@@ -138,9 +139,18 @@ workflow CLADEBREAKER {
     //MODULE: Run WhatsGNU Gather Genomes
     //
 
-    WHATSGNU_GETGENOMES (
-        WHATSGNU_MAIN.out.topgenomes
+    // WHATSGNU_GETGENOMES (
+    //    WHATSGNU_MAIN.out.topgenomes
+    // )
+
+    //
+    //MODULE: Run NCBI Genome Download
+    //
+
+    NCBIGENOMEDOWNLOAD (
+        WHATSGNU_MAIN.out.gca_list
     )
+
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
@@ -150,10 +160,10 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
-    ch_versions = ch_versions.mix(WHATSGNU_GETGENOMES.out.versions.first())
+    //ch_versions = ch_versions.mix(WHATSGNU_GETGENOMES.out.versions.first())
+    ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
 
-
-     CUSTOM_DUMPSOFTWAREVERSIONS (
+    CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
@@ -171,7 +181,7 @@ workflow CLADEBREAKER {
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (
-         ch_multiqc_files.collect()
+        ch_multiqc_files.collect()
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)

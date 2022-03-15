@@ -10,7 +10,7 @@ process FASTQC {
     publishDir "${params.outdir}/${meta.id}/fastqc", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
-    tuple val(meta), path(reads), path(outdir)
+    tuple val(meta), path(reads)
 
     output:
     tuple val(meta), path("*.html"), emit: html
@@ -24,7 +24,17 @@ process FASTQC {
     def args = task.ext.args ?: ''
     // Add soft-links to original FastQs for consistent naming in pipeline
     def prefix = task.ext.prefix ?: "${meta.id}"
-    if (meta.single_end) {
+    if (meta.assembly) {
+        //TODO: Something else should happen here.
+        """
+        touch temp.html
+        touch temp.zip
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )
+        END_VERSIONS
+        """
+    } else if (meta.single_end) {
         """
         [ ! -f  ${prefix}.fastq.gz ] && ln -s $reads ${prefix}.fastq.gz
         fastqc $args --threads $task.cpus ${prefix}.fastq.gz
