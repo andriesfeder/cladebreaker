@@ -17,7 +17,7 @@ process NCBIGENOMEDOWNLOAD {
     tuple val(meta), path("*_genomic.fna.gz")         , emit: fna     , optional: true
     // tuple val(meta), path("*_rm.out.gz")              , emit: rm      , optional: true
     // tuple val(meta), path("*_feature_table.txt.gz")   , emit: features, optional: true
-    // tuple val(meta), path("*_genomic.gff.gz")         , emit: gff     , optional: true
+    tuple val(meta), path("*_genomic.gff.gz")         , emit: gff     , optional: true
     // tuple val(meta), path("*_protein.faa.gz")         , emit: faa     , optional: true
     // tuple val(meta), path("*_protein.gpff.gz")        , emit: gpff    , optional: true
     // tuple val(meta), path("*_wgsmaster.gbff.gz")      , emit: wgs_gbk , optional: true
@@ -41,6 +41,7 @@ process NCBIGENOMEDOWNLOAD {
         $args \\
         -s genbank \\
         -F fasta \\
+        -F gff \\
         $accessions_opt \\
         --output-folder ./ \\
         --flat-output \\

@@ -114,17 +114,24 @@ workflow CLADEBREAKER {
     SHOVILL (
         INPUT_CHECK.out.reads
     )
-
+    assemblyscan_input = Channel.empty()
+    assemblyscan_input = assemblyscan_input.mix(SHOVILL.out.contigs)
+    assemblyscan_input = assemblyscan_input.mix(INPUT_CHECK.out.assemblies)
     ASSEMBLYSCAN (
-        SHOVILL.out.contigs
+        assemblyscan_input
     )
 
     //
     //MODULE: Run Prokka
     //
+    prokka_input = Channel.empty()
+    prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
+    prokka_input = prokka_input.mix(SHOVILL.out.contigs)
+    prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
     PROKKA (
-        SHOVILL.out.contigs.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+        prokka_input
+        // SHOVILL.out.contigs.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     )
 
     //

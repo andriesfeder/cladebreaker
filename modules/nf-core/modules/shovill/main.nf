@@ -28,7 +28,8 @@ process SHOVILL {
     script:
     def args = task.ext.args ?: ''
     def memory = task.memory.toGiga()
-    if (meta.assembly) {
+    //TODO: Clean this up
+    /* if (meta.assembly) {
         """
         cp ${reads[0]} contigs.fa
         touch shovill.corrections
@@ -40,21 +41,21 @@ process SHOVILL {
             shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
         END_VERSIONS
         """
-    } else {
-        """
-        shovill \\
-            --R1 ${reads[0]} \\
-            --R2 ${reads[1]} \\
-            $args \\
-            --cpus $task.cpus \\
-            --ram $memory \\
-            --outdir ./ \\
-            --force
+    } else { */
+    """
+    shovill \\
+        --R1 ${reads[0]} \\
+        --R2 ${reads[1]} \\
+        $args \\
+        --cpus $task.cpus \\
+        --ram $memory \\
+        --outdir ./ \\
+        --force
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
-        END_VERSIONS
-        """
-    }
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+    END_VERSIONS
+    """
+    //}
 }

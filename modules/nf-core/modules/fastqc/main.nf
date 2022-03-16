@@ -13,8 +13,8 @@ process FASTQC {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.html"), emit: html
-    tuple val(meta), path("*.zip") , emit: zip
+    tuple val(meta), path("*.html"), emit: html, optional: true
+    tuple val(meta), path("*.zip") , emit: zip , optional: true
     path  "versions.yml"           , emit: versions
 
     when:
@@ -26,9 +26,9 @@ process FASTQC {
     def prefix = task.ext.prefix ?: "${meta.id}"
     if (meta.assembly) {
         //TODO: Something else should happen here.
+        // touch temp.html
+        // touch temp.zip
         """
-        touch temp.html
-        touch temp.zip
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )

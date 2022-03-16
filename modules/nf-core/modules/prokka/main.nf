@@ -9,25 +9,25 @@ process PROKKA {
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
         'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"
 
-    publishDir "${params.outdir}/${meta.id}/annotation", mode: params.publish_dir_mode, overwrite: params.force
+    publishDir "${params.outdir}/${meta.id}", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(fasta), path(proteins), path(prodigal_tf)
 
     output:
-    tuple val(meta), path("*.gff"), emit: gff
-    tuple val(meta), path("*.gbk"), emit: gbk
-    tuple val(meta), path("*.fna"), emit: fna
-    tuple val(meta), path("*.faa"), emit: faa
-    tuple val(meta), path("*.ffn"), emit: ffn
-    tuple val(meta), path("*.sqn"), emit: sqn
-    tuple val(meta), path("*.fsa"), emit: fsa
-    tuple val(meta), path("*.tbl"), emit: tbl
-    tuple val(meta), path("*.err"), emit: err
-    tuple val(meta), path("*.log"), emit: log
-    tuple val(meta), path("*.txt"), emit: txt
-    tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml" , emit: versions
+    tuple val(meta), path("annotation/*.gff"), emit: gff
+    tuple val(meta), path("annotation/*.gbk"), emit: gbk
+    tuple val(meta), path("annotation/*.fna"), emit: fna
+    tuple val(meta), path("annotation/*.faa"), emit: faa
+    tuple val(meta), path("annotation/*.ffn"), emit: ffn
+    tuple val(meta), path("annotation/*.sqn"), emit: sqn
+    tuple val(meta), path("annotation/*.fsa"), emit: fsa
+    tuple val(meta), path("annotation/*.tbl"), emit: tbl
+    tuple val(meta), path("annotation/*.err"), emit: err
+    tuple val(meta), path("annotation/*.log"), emit: log
+    tuple val(meta), path("annotation/*.txt"), emit: txt
+    tuple val(meta), path("annotation/*.tsv"), emit: tsv
+    path "annotation/versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -57,17 +57,18 @@ process PROKKA {
     // def prodigal_opt = prodigal_tf ? "--prodigaltf ${prodigal_tf[0]}" : ""
     //${params.outdir}/${meta.id}/$fasta
     """
+    
     prokka \\
         $args \\
         --cpus $task.cpus \\
         --prefix $prefix \\
-        --outdir ./ \\
+        --outdir annotation \\
         --force \\
         $prokka_proteins \\
         $prokka_prodigal \\
-        $fasta
+        ${fasta}
 
-    cat <<-END_VERSIONS > versions.yml
+    cat <<-END_VERSIONS > annotation/versions.yml
     "${task.process}":
         prokka: \$(echo \$(prokka --version 2>&1) | sed 's/^.*prokka //')
     END_VERSIONS
