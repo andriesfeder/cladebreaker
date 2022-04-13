@@ -35,7 +35,8 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { INPUT_CHECK    } from '../subworkflows/local/input_check'
+include { GATHER_GENOMES } from '../subworkflows/local/gather_genomes'
 
 /*
 ========================================================================================
@@ -127,6 +128,7 @@ workflow CLADEBREAKER {
     prokka_input = Channel.empty()
     prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
     prokka_input = prokka_input.mix(SHOVILL.out.contigs)
+    //prokka_input = prokka_input.mix(NCBIGENOMEDOWNLOAD.out.fna)
     prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
     PROKKA (
@@ -154,8 +156,29 @@ workflow CLADEBREAKER {
     //MODULE: Run NCBI Genome Download
     //
 
-    NCBIGENOMEDOWNLOAD (
+    GATHER_GENOMES (
         WHATSGNU_MAIN.out.gca_list
+    )
+
+    //GATHER_GENOMES.out.ncbi = GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+    // prokka_input = prokka_input.mix(GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf )))
+
+    // NCBIGENOMEDOWNLOAD (
+    //    WHATSGNU_MAIN.out.gca_list
+    // )
+
+    //
+    //MODULE: Run Roary
+    //
+
+    roary_input = Channel.empty()
+    roary_input = roary_input.mix(GATHER_GENOMES.out.prokka.last())
+    roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
+    // roary_input = roary_input.mix(GATHER_GENOMES.out.gff_path.first())
+    roary_input.view()
+    // roary_input = roary_input.collect()
+    ROARY (
+        roary_input
     )
 
 
@@ -167,8 +190,9 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
-    //ch_versions = ch_versions.mix(WHATSGNU_GETGENOMES.out.versions.first())
-    ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
+    ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions)
+    // ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
+    // ch_versions = ch_versions.mix(ROARY.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

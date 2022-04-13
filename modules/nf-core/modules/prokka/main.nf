@@ -9,7 +9,7 @@ process PROKKA {
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
         'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"
 
-    publishDir "${params.outdir}/${meta.id}", mode: params.publish_dir_mode, overwrite: params.force
+    publishDir "${params.outdir}/${meta.id}/", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(fasta), path(proteins), path(prodigal_tf)
@@ -27,7 +27,8 @@ process PROKKA {
     tuple val(meta), path("annotation/*.log"), emit: log
     tuple val(meta), path("annotation/*.txt"), emit: txt
     tuple val(meta), path("annotation/*.tsv"), emit: tsv
-    path "annotation/versions.yml" , emit: versions
+    // tuple val(meta), path("${workflow.workDir}/tmp/gff/"), emit: gff_path
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,6 +37,8 @@ process PROKKA {
     def args = task.ext.args   ?: ''
     prefix   = task.ext.prefix ?: "${meta.id}"
     prokka_prodigal = ""
+    def src = "annotation/${meta.id}.gff"
+    def dest = "${workflow.workDir}/tmp/gff/${meta.id}.gff"
     if (prodigal_tf.getName() != 'EMPTY_TF' && !params.skip_prodigal_tf) {
         prokka_prodigal = "--prodigaltf ${prodigal_tf}"
     }
@@ -68,7 +71,9 @@ process PROKKA {
         $prokka_prodigal \\
         ${fasta}
 
-    cat <<-END_VERSIONS > annotation/versions.yml
+    cp $src $dest
+
+    cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         prokka: \$(echo \$(prokka --version 2>&1) | sed 's/^.*prokka //')
     END_VERSIONS

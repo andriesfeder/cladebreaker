@@ -46,6 +46,7 @@ process WHATSGNU_MAIN {
     }
 
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
+    // TODO: change --topgenomes_count to ${params.topgenomes_count}
     """
     WhatsGNU_main.py \\
         ${args} \\
@@ -53,7 +54,7 @@ process WHATSGNU_MAIN {
         ${mode} \\
         -t \\
         -o WhatsGNU_Report \\
-        --topgenomes_count ${params.topgenomes_count} \\
+        --topgenomes_count 1 \\
         --force \\
         ${faa}
 
