@@ -30,7 +30,7 @@ process WHATSGNU_MAIN {
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     tuple val(meta), path("WhatsGNU_Report/*_WhatsGNU_report.txt")  , emit: report
     tuple val(meta), path("WhatsGNU_Report/*_topgenomes.txt")       , emit: topgenomes
-    tuple val(meta), path("WhatsGNU_Report/${meta.id}_gca_list.txt"), emit: gca_list
+    path("WhatsGNU_Report/${meta.id}_gca_list.txt"), emit: gca_list
     tuple val(meta), path("WhatsGNU_Report/*.log")                  , emit: log
     path "versions.yml"                                             , emit: versions
 
@@ -54,7 +54,7 @@ process WHATSGNU_MAIN {
         ${mode} \\
         -t \\
         -o WhatsGNU_Report \\
-        --topgenomes_count 1 \\
+        --topgenomes_count 3 \\
         --force \\
         ${faa}
 

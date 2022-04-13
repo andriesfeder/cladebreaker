@@ -15,10 +15,11 @@ workflow GATHER_GENOMES {
     // ncbi_genomes.view()
 
     ch_paths = Channel.empty()
-    ch_paths = ncbi_genomes.flatten()
-    ch_paths = ch_paths.last()
-    ch_paths = ch_paths.splitText()
-    // ch_paths.view()
+
+    // ch_paths = ncbi_genomes.flatten()
+
+    ch_paths = ncbi_genomes.splitText()
+
     // ncbi_genomes.view()
     ch_paths
         .map { create_gca_channels( it ) }

@@ -159,7 +159,6 @@ workflow CLADEBREAKER {
     GATHER_GENOMES (
         WHATSGNU_MAIN.out.gca_list
     )
-
     //GATHER_GENOMES.out.ncbi = GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     // prokka_input = prokka_input.mix(GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf )))
 
@@ -181,6 +180,10 @@ workflow CLADEBREAKER {
         roary_input
     )
 
+    // RAXMLNG (
+    //     ROARY.out.aln
+    // )
+
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
@@ -190,9 +193,10 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
-    ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions)
+    ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
     // ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
-    // ch_versions = ch_versions.mix(ROARY.out.versions.first())
+    ch_versions = ch_versions.mix(ROARY.out.versions.first())
+    // ch_versions = ch_versions.mix(RAXMLNG.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
