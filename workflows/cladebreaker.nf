@@ -91,9 +91,10 @@ workflow CLADEBREAKER {
     //
     // MODULE: Run gather_samples
     //
-    GATHER_SAMPLES ( 
+    GATHER_SAMPLES (
         INPUT_CHECK.out.reads
     )
+
 
     //
     // MODULE: Run FastQC
