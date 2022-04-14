@@ -8,7 +8,7 @@ include { NCBIGENOMEDOWNLOAD          } from '../../modules/nf-core/modules/ncbi
 workflow GATHER_GENOMES {
 
     take:
-    ncbi_genomes// tuple val (meta), path(accessions)
+    ncbi_genomes// path(accessions)
 
     main:
     ch_versions = Channel.empty()
@@ -23,8 +23,10 @@ workflow GATHER_GENOMES {
     // ncbi_genomes.view()
     ch_paths
         .map { create_gca_channels( it ) }
+        .unique()
         .set { gca }
     // gca.view()
+    // gca = gca.unique()
     NCBIGENOMEDOWNLOAD (
         gca
     )

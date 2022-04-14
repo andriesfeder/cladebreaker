@@ -1,5 +1,5 @@
 process ROARY {
-    tag "$meta.id"
+    // tag "$meta.id"
     label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::roary=3.13.0" : null)

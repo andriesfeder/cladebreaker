@@ -24,7 +24,7 @@ process RAXMLNG {
     """
     raxml-ng \\
         $args \\
-        --model GTR+G
+        --model GTR+G \\
         --msa $alignment \\
         --threads $task.cpus \\
         --prefix output

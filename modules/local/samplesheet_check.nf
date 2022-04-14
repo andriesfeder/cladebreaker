@@ -18,6 +18,8 @@ process SAMPLESHEET_CHECK {
     check_samplesheet.py \\
         $samplesheet \\
         samplesheet.valid.csv
+    rm -rf ${workflow.workDir}/tmp/gff
+    mkdir ${workflow.workDir}/tmp/gff
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

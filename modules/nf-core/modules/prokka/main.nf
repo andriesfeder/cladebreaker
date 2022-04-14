@@ -3,7 +3,7 @@ process PROKKA {
     label 'process_low'
 
     //TODO: Figure out conda build issue.
-    // conda (params.enable_conda ? "bioconda::prokka=1.14.6" : null)
+    conda (params.enable_conda ? "bioconda::prokka=1.14.5" : null)
     // conda (params.enable_conda ? "${baseDir}/modules/nf-core/modules/prokka/prokka-env.yaml" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :

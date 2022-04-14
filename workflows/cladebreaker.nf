@@ -88,18 +88,6 @@ workflow CLADEBREAKER {
     // Need to figure out the genome_size, setup_datasets thing to eventually
     // replace params.genome_size
 
-    // GATHER_SAMPLES (
-    //    INPUT_CHECK.out.reads
-        // , params.genome_size
-    // )
-
-    //
-    // MODULE: qc-reads
-    //
-    // QC_READS (
-    //    GATHER_SAMPLES.out.raw_fastq
-    // )
-
     //
     // MODULE: Run FastQC
     //
@@ -128,12 +116,10 @@ workflow CLADEBREAKER {
     prokka_input = Channel.empty()
     prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
     prokka_input = prokka_input.mix(SHOVILL.out.contigs)
-    //prokka_input = prokka_input.mix(NCBIGENOMEDOWNLOAD.out.fna)
     prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
     PROKKA (
         prokka_input
-        // SHOVILL.out.contigs.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     )
 
     //
@@ -145,26 +131,12 @@ workflow CLADEBREAKER {
     )
 
     //
-    //MODULE: Run WhatsGNU Gather Genomes
-    //
-
-    // WHATSGNU_GETGENOMES (
-    //    WHATSGNU_MAIN.out.topgenomes
-    // )
-
-    //
-    //MODULE: Run NCBI Genome Download
+    //SUBWORKFLOW: Run NCBI Genome Download and Prokka for each genbank genome
     //
 
     GATHER_GENOMES (
         WHATSGNU_MAIN.out.gca_list
     )
-    //GATHER_GENOMES.out.ncbi = GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
-    // prokka_input = prokka_input.mix(GATHER_GENOMES.out.ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf )))
-
-    // NCBIGENOMEDOWNLOAD (
-    //    WHATSGNU_MAIN.out.gca_list
-    // )
 
     //
     //MODULE: Run Roary
@@ -173,30 +145,25 @@ workflow CLADEBREAKER {
     roary_input = Channel.empty()
     roary_input = roary_input.mix(GATHER_GENOMES.out.prokka.last())
     roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
-    // roary_input = roary_input.mix(GATHER_GENOMES.out.gff_path.first())
-    roary_input.view()
-    // roary_input = roary_input.collect()
+
     ROARY (
         roary_input
     )
 
-    // RAXMLNG (
-    //     ROARY.out.aln
-    // )
+    RAXMLNG (
+        ROARY.out.aln
+    )
 
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-    // ch_versions = ch_versions.mix(GATHER_SAMPLES.out.versions.first())
-    // ch_versions = ch_versions.mix(QC_READS.out.versions.first())
     ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
     ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
-    // ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
-    ch_versions = ch_versions.mix(ROARY.out.versions.first())
-    // ch_versions = ch_versions.mix(RAXMLNG.out.versions.first())
+    ch_versions = ch_versions.mix(ROARY.out.versions)
+    ch_versions = ch_versions.mix(RAXMLNG.out.versions)
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
