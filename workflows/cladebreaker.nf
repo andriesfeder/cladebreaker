@@ -11,7 +11,7 @@ WorkflowCladebreaker.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf , params.db ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -35,7 +35,8 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { INPUT_CHECK    } from '../subworkflows/local/input_check'
+include { GATHER_GENOMES } from '../subworkflows/local/gather_genomes'
 
 /*
 ========================================================================================
@@ -49,10 +50,17 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
-include { PROKKA                     } from '../modules/nf-core/modules/prokka/main'
-include { ROARY                     } from '../modules/nf-core/modules/roary/main'
-include { PIRATE                     } from '../modules/nf-core/modules/pirate/main'
+include { ASSEMBLYSCAN                } from '../modules/nf-core/modules/assemblyscan/main'
+include { PROKKA                      } from '../modules/nf-core/modules/prokka/main'
+include { ROARY                       } from '../modules/nf-core/modules/roary/main'
+include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
+include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigenomedownload/main'
+
+include { WHATSGNU_MAIN                    } from '../modules/local/whatsgnu/main'
+include { WHATSGNU_GETGENOMES              } from '../modules/local/whatsgnu/getgenomes'
+include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
+
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -75,15 +83,88 @@ workflow CLADEBREAKER {
     INPUT_CHECK (
         ch_input
     )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    //
+    // MODULE: Run FastQC
+    // Need to figure out the genome_size, setup_datasets thing to eventually
+    // replace params.genome_size
 
     //
     // MODULE: Run FastQC
     //
+
     FASTQC (
         INPUT_CHECK.out.reads
     )
+
+    //
+    // MODULE: Run Shovill
+    //
+
+    SHOVILL (
+        INPUT_CHECK.out.reads
+    )
+    assemblyscan_input = Channel.empty()
+    assemblyscan_input = assemblyscan_input.mix(SHOVILL.out.contigs)
+    assemblyscan_input = assemblyscan_input.mix(INPUT_CHECK.out.assemblies)
+    ASSEMBLYSCAN (
+        assemblyscan_input
+    )
+
+    //
+    //MODULE: Run Prokka
+    //
+    prokka_input = Channel.empty()
+    prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
+    prokka_input = prokka_input.mix(SHOVILL.out.contigs)
+    prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+
+    PROKKA (
+        prokka_input
+    )
+
+    //
+    //MODULE: Run WhatsGNU
+    //
+
+    WHATSGNU_MAIN (
+        PROKKA.out.faa.combine(Channel.fromPath( params.db ))
+    )
+
+    //
+    //SUBWORKFLOW: Run NCBI Genome Download and Prokka for each genbank genome
+    //
+
+    GATHER_GENOMES (
+        WHATSGNU_MAIN.out.gca_list
+    )
+
+    //
+    //MODULE: Run Roary
+    //
+
+    roary_input = Channel.empty()
+    roary_input = roary_input.mix(GATHER_GENOMES.out.prokka.last())
+    roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
+
+    ROARY (
+        roary_input
+    )
+
+    RAXMLNG (
+        ROARY.out.aln
+    )
+
+
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
+    ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
+    ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+    ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
+    ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
+    ch_versions = ch_versions.mix(ROARY.out.versions)
+    ch_versions = ch_versions.mix(RAXMLNG.out.versions)
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

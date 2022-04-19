@@ -1,14 +1,20 @@
 process SHOVILL {
+
     tag "$meta.id"
     label 'process_medium'
+
 
     conda (params.enable_conda ? "bioconda::shovill=1.1.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/shovill:1.1.0--0' :
         'quay.io/biocontainers/shovill:1.1.0--0' }"
 
+    publishDir "${params.outdir}/${meta.id}/assembly", mode: params.publish_dir_mode, overwrite: params.force 
+
     input:
     tuple val(meta), path(reads)
+    //, path(extra), path(genome_size)
+
 
     output:
     tuple val(meta), path("contigs.fa")                         , emit: contigs
@@ -24,6 +30,22 @@ process SHOVILL {
     script:
     def args = task.ext.args ?: ''
     def memory = task.memory.toGiga()
+
+    //TODO: Clean this up
+    /* if (meta.assembly) {
+        """
+        cp ${reads[0]} contigs.fa
+        touch shovill.corrections
+        touch shovill.log
+        touch spades.fasta
+        touch contigs.gfa
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
+        END_VERSIONS
+        """
+    } else { */
+
     """
     shovill \\
         --R1 ${reads[0]} \\
@@ -39,4 +61,4 @@ process SHOVILL {
         shovill: \$(echo \$(shovill --version 2>&1) | sed 's/^.*shovill //')
     END_VERSIONS
     """
-}
+    //}

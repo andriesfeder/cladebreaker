@@ -11,7 +11,8 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
-                "input"
+                "input",
+                "db"
             ],
             "properties": {
                 "input": {
@@ -41,6 +42,34 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                },
+                "proteins": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to Genbank file for use during annotation.  See Prokka documentation for appropriate formatting."
+                },
+                "prodigal_tf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to pretrained prodigal model file for use during annotation.  See Prokka documentation for appropriate formatting."
+                },
+                "db": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to precompressed WhatsGNU database."
+                },
+                "o": {
+                    "type": "boolean",
+                    "description": "Specifies that precompressed WhatsGNU database is ortholog."
+                },
+                "b": {
+                    "type": "boolean",
+                    "description": "Specifies that precompressed WhatsGNU database is basic."
+                },
+                "topgenomes_count": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Number of topgenomes for WhatsGNU to find."
                 }
             }
         },
@@ -238,6 +267,29 @@
                     "description": "Run this workflow with Conda. You can also use '-profile conda' instead of providing this parameter.",
                     "hidden": true,
                     "fa_icon": "fas fa-bacon"
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "hidden": true,
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ]
+                },
+                "force": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Nextflow will overwrite existing output files.",
+                    "fa_icon": "fas fa-recycle",
+                    "hidden": true
                 }
             }
         }

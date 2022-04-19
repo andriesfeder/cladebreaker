@@ -6,20 +6,35 @@ process FASTQC {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
         'quay.io/biocontainers/fastqc:0.11.9--0' }"
+    
+    publishDir "${params.outdir}/${meta.id}/fastqc", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.html"), emit: html
-    tuple val(meta), path("*.zip") , emit: zip
+    tuple val(meta), path("*.html"), emit: html, optional: true
+    tuple val(meta), path("*.zip") , emit: zip , optional: true
     path  "versions.yml"           , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
     // Add soft-links to original FastQs for consistent naming in pipeline
     def prefix = task.ext.prefix ?: "${meta.id}"
-    if (meta.single_end) {
+    if (meta.assembly) {
+        //TODO: Something else should happen here.
+        // touch temp.html
+        // touch temp.zip
+        """
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )
+        END_VERSIONS
+        """
+    } else if (meta.single_end) {
         """
         [ ! -f  ${prefix}.fastq.gz ] && ln -s $reads ${prefix}.fastq.gz
         fastqc $args --threads $task.cpus ${prefix}.fastq.gz
@@ -30,7 +45,7 @@ process FASTQC {
         END_VERSIONS
         """
     } else {
-        """
+        """ 
         [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
         [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
         fastqc $args --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz
