@@ -16,6 +16,7 @@
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
             "multiqc": {
+
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
             "ncbigenomedownload": {
@@ -32,6 +33,15 @@
             },
             "roary": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "pirate": {
+                "git_sha": "e20e57f90b6787ac9a010a980cf6ea98bd990046"
+            },
+            "prokka": {
+                "git_sha": "e20e57f90b6787ac9a010a980cf6ea98bd990046"
+            },
+            "raxmlng": {
+                "git_sha": "e20e57f90b6787ac9a010a980cf6ea98bd990046"
             },
             "shovill": {
                 "git_sha": "e20e57f90b6787ac9a010a980cf6ea98bd990046"

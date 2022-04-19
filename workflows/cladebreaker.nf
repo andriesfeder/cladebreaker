@@ -61,6 +61,7 @@ include { WHATSGNU_MAIN                    } from '../modules/local/whatsgnu/mai
 include { WHATSGNU_GETGENOMES              } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
 
+
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*

@@ -5,9 +5,11 @@ process PROKKA {
     //TODO: Figure out conda build issue.
     conda (params.enable_conda ? "bioconda::prokka=1.14.5" : null)
     // conda (params.enable_conda ? "${baseDir}/modules/nf-core/modules/prokka/prokka-env.yaml" : null)
+
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
         'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"
+
 
     publishDir "${params.outdir}/${meta.id}/", mode: params.publish_dir_mode, overwrite: params.force
 
@@ -28,6 +30,7 @@ process PROKKA {
     tuple val(meta), path("annotation/*.txt"), emit: txt
     tuple val(meta), path("annotation/*.tsv"), emit: tsv
     // tuple val(meta), path("${workflow.workDir}/tmp/gff/"), emit: gff_path
+
     path "versions.yml" , emit: versions
 
     when:
@@ -61,6 +64,7 @@ process PROKKA {
     //${params.outdir}/${meta.id}/$fasta
     """
     
+
     prokka \\
         $args \\
         --cpus $task.cpus \\

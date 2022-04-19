@@ -1,11 +1,14 @@
 process ROARY {
+
     // tag "$meta.id"
+
     label 'process_medium'
 
     conda (params.enable_conda ? "bioconda::roary=3.13.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/roary:3.13.0--pl526h516909a_0' :
         'quay.io/biocontainers/roary:3.13.0--pl526h516909a_0' }"
+
 
     publishDir "${params.outdir}/roary_alignment", mode: params.publish_dir_mode, overwrite: params.force
 
@@ -31,6 +34,7 @@ process ROARY {
     """
     
     roary $args -e -n -p $task.cpus -f results/ $gff_in
+
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,7 +1,8 @@
 process SHOVILL {
-    tag "${meta.id}"
-    // label 'process_medium'
-    label 'process_low'
+
+    tag "$meta.id"
+    label 'process_medium'
+
 
     conda (params.enable_conda ? "bioconda::shovill=1.1.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -13,6 +14,7 @@ process SHOVILL {
     input:
     tuple val(meta), path(reads)
     //, path(extra), path(genome_size)
+
 
     output:
     tuple val(meta), path("contigs.fa")                         , emit: contigs
@@ -28,6 +30,7 @@ process SHOVILL {
     script:
     def args = task.ext.args ?: ''
     def memory = task.memory.toGiga()
+
     //TODO: Clean this up
     /* if (meta.assembly) {
         """
@@ -42,6 +45,7 @@ process SHOVILL {
         END_VERSIONS
         """
     } else { */
+
     """
     shovill \\
         --R1 ${reads[0]} \\
@@ -58,4 +62,3 @@ process SHOVILL {
     END_VERSIONS
     """
     //}
-}

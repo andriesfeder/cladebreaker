@@ -5,11 +5,13 @@ process RAXMLNG {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/raxml-ng:1.0.3--h32fcf60_0' :
         'quay.io/biocontainers/raxml-ng:1.0.3--h32fcf60_0' }"
+
     
     publishDir "${params.outdir}/raxml", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(alignment)
+
 
     output:
     path "*.raxml.bestTree", emit: phylogeny
