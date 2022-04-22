@@ -10,7 +10,7 @@
 VERSION=0.1.0
 CONTAINER_VERSION="${VERSION%.*}.x"
 CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
-CLADEBREAKER_NF="${CONDA_ENV}/share/bactopia-${CONTAINER_VERSION}"
+CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"
 
 
 if [[ $# == 0 ]]; then
@@ -22,6 +22,21 @@ if [[ "$1" == "version" ]] || [[ "$1" == "--version" ]]; then
     echo "cladebreaker ${VERSION}"
 
 else
+
+    WORK_DIR=""
+    WORK_ARG=""
+    CAN_CLEAN_UP=1
+
+    if echo "$*" | sed -r 's/ ([-]+)/\n\1/g' | grep "^-w \|-work-dir" > /dev/null; then
+        # User specified a work directory
+        CAN_CLEAN_UP=0
+    else
+        # User did not specify a work directory, we'll use custom one based on workflow name
+        WORK_DIR="$(pwd)/work/${WF}"
+        WORK_ARG="-w ${WORK_DIR}"
+    fi
+    OPTS="${WORK_ARG}"
+    echo "nextflow run ${CLADEBREAKER_NF}/main.nf ${OPTS} ${@:1}"
     if nextflow run "${CLADEBREAKER_NF}/main.nf" ${OPTS} "${@:1}"; then
         # bactopia finished successfully
         if [[ "$*" == *"--cleanup_workdir"* ]] && [[ "${CAN_CLEAN_UP}" -eq 1 ]]; then
