@@ -8,25 +8,25 @@
 # If no user input, print usage
 
 VERSION=0.1.0
-# CONTAINER_VERSION="${VERSION%.*}.x"
-# CONDA_ENV=$(which bactopia | sed 's=bin/bactopia==')
-# BACTOPIA_NF="${CONDA_ENV}/share/bactopia-${CONTAINER_VERSION}"
+CONTAINER_VERSION="${VERSION%.*}.x"
+CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
+CLADEBREAKER_NF="${CONDA_ENV}/share/bactopia-${CONTAINER_VERSION}"
 
 
 if [[ $# == 0 ]]; then
 
-    echo "bactopia - v${VERSION}"
+    echo "cladebreaker - v${VERSION}"
 fi
 
 if [[ "$1" == "version" ]] || [[ "$1" == "--version" ]]; then
-    echo "bactopia ${VERSION}"
+    echo "cladebreaker ${VERSION}"
 
 else
-    if nextflow run "${BACTOPIA_NF}/main.nf" ${OPTS} "${@:1}"; then
+    if nextflow run "${CLADEBREAKER_NF}/main.nf" ${OPTS} "${@:1}"; then
         # bactopia finished successfully
         if [[ "$*" == *"--cleanup_workdir"* ]] && [[ "${CAN_CLEAN_UP}" -eq 1 ]]; then
             # user asked for work dir to be cleaned up
-            echo "Bactopia finished successfully! Found '--cleanup_workdir' removing '${WORK_DIR}'"
+            echo "Cladebreaker finished successfully! Found '--cleanup_workdir' removing '${WORK_DIR}'"
             rm -rf "${WORK_DIR}"
         fi
     else
