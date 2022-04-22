@@ -16,6 +16,7 @@ CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"
 if [[ $# == 0 ]]; then
 
     echo "cladebreaker - v${VERSION}"
+    exit
 fi
 
 if [[ "$1" == "version" ]] || [[ "$1" == "--version" ]]; then
@@ -36,7 +37,7 @@ else
         WORK_ARG="-w ${WORK_DIR}"
     fi
     OPTS="${WORK_ARG}"
-    echo "nextflow run ${CLADEBREAKER_NF}/main.nf ${OPTS} ${@:1}"
+    # echo "nextflow run ${CLADEBREAKER_NF}/main.nf ${OPTS} ${@:1}"
     if nextflow run "${CLADEBREAKER_NF}/main.nf" ${OPTS} "${@:1}"; then
         # bactopia finished successfully
         if [[ "$*" == *"--cleanup_workdir"* ]] && [[ "${CAN_CLEAN_UP}" -eq 1 ]]; then
