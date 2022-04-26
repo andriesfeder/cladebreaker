@@ -57,10 +57,10 @@ include { PIRATE                      } from '../modules/nf-core/modules/pirate/
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigenomedownload/main'
 
-include { WHATSGNU_MAIN                    } from '../modules/local/whatsgnu/main'
-include { WHATSGNU_GETGENOMES              } from '../modules/local/whatsgnu/getgenomes'
+include { WHATSGNU_MAIN               } from '../modules/local/whatsgnu/main'
+include { WHATSGNU_GETGENOMES         } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
-
+include { SNIPPY_SNIPPY               } from '../modules/local/snippy/snippy'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -92,7 +92,7 @@ workflow CLADEBREAKER {
     //
     // MODULE: Run FastQC
     //
-
+    assemblyscan_input = Channel.empty()
     FASTQC (
         INPUT_CHECK.out.reads
     )
@@ -104,8 +104,8 @@ workflow CLADEBREAKER {
     SHOVILL (
         INPUT_CHECK.out.reads
     )
-    assemblyscan_input = Channel.empty()
     assemblyscan_input = assemblyscan_input.mix(SHOVILL.out.contigs)
+
     assemblyscan_input = assemblyscan_input.mix(INPUT_CHECK.out.assemblies)
     ASSEMBLYSCAN (
         assemblyscan_input
@@ -117,10 +117,10 @@ workflow CLADEBREAKER {
     prokka_input = Channel.empty()
     prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
     prokka_input = prokka_input.mix(SHOVILL.out.contigs)
-    prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+    // prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
     PROKKA (
-        prokka_input
+        prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     )
 
     //
@@ -142,19 +142,28 @@ workflow CLADEBREAKER {
     //
     //MODULE: Run Roary
     //
+    if ( params.ref == null) {
+        roary_input = Channel.empty()
+        roary_input = roary_input.mix(GATHER_GENOMES.out.prokka_gff.last())
+        roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
 
-    roary_input = Channel.empty()
-    roary_input = roary_input.mix(GATHER_GENOMES.out.prokka.last())
-    roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
+        ROARY (
+            roary_input
+        )
 
-    ROARY (
-        roary_input
-    )
-
-    RAXMLNG (
-        ROARY.out.aln
-    )
-
+        RAXMLNG (
+            ROARY.out.aln
+        )
+    }
+    else {
+        snippy_input = Channel.empty()
+        snippy_input = snippy_input.mix(INPUT_CHECK.out.reads).mix(INPUT_CHECK.out.assemblies)
+        snippy_input = snippy_input.mix(GATHER_GENOMES.out.ncbi)
+        snippy_input = prokka_input.combine(Channel.fromPath( params.ref ))
+        SNIPPY_SNIPPY (
+            snippy_input
+        )
+    }
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
@@ -163,9 +172,13 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
     ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
-    ch_versions = ch_versions.mix(ROARY.out.versions)
-    ch_versions = ch_versions.mix(RAXMLNG.out.versions)
-
+    if ( params.ref == null) {
+        ch_versions = ch_versions.mix(ROARY.out.versions)
+        ch_versions = ch_versions.mix(RAXMLNG.out.versions)
+    }
+    else {
+        ch_versions = ch_versions.mix(SNIPPY_SNIPPY.out.versions)
+    }
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )

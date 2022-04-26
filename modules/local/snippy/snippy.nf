@@ -1,7 +1,3 @@
-// TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
-//               https://github.com/nf-core/modules/tree/master/modules
-//               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
-//               https://nf-co.re/join
 // TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
@@ -15,33 +11,41 @@
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
 
-process GATHERGFF {
+process SNIPPY_SNIPPY {
     tag "$meta.id"
     label 'process_low'
 
-    // TODO nf-core: List required Conda package(s).
-    //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
-    //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
-    // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
-    conda (params.enable_conda ? "YOUR-TOOL-HERE" : null)
+    //TODO: Fix this
+    conda (params.enable_conda ? "bioconda::snippy=4.6.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-        'quay.io/biocontainers/YOUR-TOOL-HERE' }"
+        'https://depot.galaxyproject.org/singularity/snippy:4.6.0--hdfd78af_2':
+        'quay.io/biocontainers/snippy:4.6.0--hdfd78af_1' }"
+
+    publishDir "${params.outdir}/${meta.id}/snippy", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
-    // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
-    //               MUST be provided as an input via a Groovy Map called "meta".
-    //               This information may not be required in some instances e.g. indexing reference genome files:
-    //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
-    // TODO nf-core: Where applicable please provide/convert compressed files as input/output
-    //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(gff)
+
+    tuple val(meta), path(snp_in), path(ref)
 
     output:
-    // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("*.bam"), emit: bam
-    // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"           , emit: versions
+
+    tuple val(meta), path("*.tab")              , optional:true, emit: tab
+    tuple val(meta), path("*.csv")              , optional:true, emit: csv
+    tuple val(meta), path("*.html")             , optional:true, emit: html
+    tuple val(meta), path("*.vcf")              , optional:true, emit: vcf
+    tuple val(meta), path("*.bed")              , optional:true, emit: bed
+    tuple val(meta), path("*.gff")              , optional:true, emit: gff
+    tuple val(meta), path("*.bam")              , optional:true, emit: bam
+    tuple val(meta), path("*.bam.bai")          , optional:true, emit: bam_bai
+    tuple val(meta), path("*.log")              , emit: log
+    tuple val(meta), path("*.aligned.fa")       , optional:true, emit: aln_fa
+    tuple val(meta), path("*.consensus.fa")     , optional:true, emit: consensus_fa
+    tuple val(meta), path("*.consensus.subs.fa"), optional:true, emit: consensus_subs
+    tuple val(meta), path("*.raw.vcf")          , optional:true, emit: raw_vcf
+    tuple val(meta), path("*.filt.vcf")         , optional:true, emit: filt_vcf
+    tuple val(meta), path("*.vcf.gz")           , optional:true, emit: vcf_gz
+    tuple val(meta), path("*.vcf.gz.csi")       , optional:true, emit: vcf_gz_csi
+    path "versions.yml"                         , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -55,18 +59,30 @@ process GATHERGFF {
     //               using the Nextflow "task" variable e.g. "--threads $task.cpus"
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
+    def input = ""
+    if ( meta.assembly ) {
+        input = "--ctgs ${snp_in}"
+    }
+    else {
+        if( meta.single_end ) {
+            input = " --R1 ${snp_in[0]}"
+        }
+        else {
+            input = " --R1 ${snp_in[0]} --R2 ${snp_in[1]}"
+        }
+    }
+
     """
-    samtools \\
-        sort \\
+    snippy \\
         $args \\
-        -@ $task.cpus \\
-        -o ${prefix}.bam \\
-        -T $prefix \\
-        $bam
+        -- ./ \\
+        $input \\
+        --ref ${ref} \\
+
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        gathergff: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        snippy: snippy: \$(echo \$(snippy --version 2>&1) | sed 's/^.*snippy //')
     END_VERSIONS
     """
 }
