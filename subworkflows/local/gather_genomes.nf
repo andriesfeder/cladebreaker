@@ -35,12 +35,12 @@ workflow GATHER_GENOMES {
             prokka_ncbi
         )
         ch_versions = ch_versions.mix(PROKKA.out.versions.first())
-        prokka_gff = prokka_emit.mix(PROKKA.out.gff)
+        prokka_gff = prokka_gff.mix(PROKKA.out.gff)
     }
 
     emit:
     ncbi = NCBIGENOMEDOWNLOAD.out.fna
-    prokka_gff           // channel: [ val(meta), [ assemblies] ]
+    prokka_gff          // channel: [ val(meta), [ assemblies] ]
     versions = ch_versions             // channel: [ versions.yml ]
 }
 

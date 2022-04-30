@@ -60,7 +60,8 @@ include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigen
 include { WHATSGNU_MAIN               } from '../modules/local/whatsgnu/main'
 include { WHATSGNU_GETGENOMES         } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
-include { SNIPPY_SNIPPY               } from '../modules/local/snippy/snippy'
+include { SNIPPY                      } from '../modules/local/snippy/snippy'
+include {SNIPPY_CORE                  } from '../modules/local/snippy/snippycore'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -159,9 +160,17 @@ workflow CLADEBREAKER {
         snippy_input = Channel.empty()
         snippy_input = snippy_input.mix(INPUT_CHECK.out.reads).mix(INPUT_CHECK.out.assemblies)
         snippy_input = snippy_input.mix(GATHER_GENOMES.out.ncbi)
-        snippy_input = prokka_input.combine(Channel.fromPath( params.ref ))
-        SNIPPY_SNIPPY (
+        snippy_input = snippy_input.combine(Channel.fromPath( params.ref ))
+        SNIPPY (
             snippy_input
+        )
+        snippy_core = Channel.empty()
+        snippy_core = SNIPPY.out.snippy_dir.collect()
+        SNIPPY_CORE (
+            snippy_core
+        )
+        RAXMLNG (
+            SNIPPY_CORE.out.full_aln
         )
     }
 
@@ -177,7 +186,8 @@ workflow CLADEBREAKER {
         ch_versions = ch_versions.mix(RAXMLNG.out.versions)
     }
     else {
-        ch_versions = ch_versions.mix(SNIPPY_SNIPPY.out.versions)
+        ch_versions = ch_versions.mix(SNIPPY.out.versions)
+        ch_versions = ch_versions.mix(SNIPPY_CORE.out.versions)
     }
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

@@ -10,7 +10,7 @@ process RAXMLNG {
     publishDir "${params.outdir}/raxml", mode: params.publish_dir_mode, overwrite: params.force
 
     input:
-    tuple val(meta), path(alignment)
+    path(alignment)
 
 
     output:
