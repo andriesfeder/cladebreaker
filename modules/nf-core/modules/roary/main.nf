@@ -18,7 +18,7 @@ process ROARY {
 
     output:
     tuple val(meta), path("results/*")                    , emit: results
-    tuple val(meta), path("results/*.aln"), optional: true, emit: aln
+    path("results/*.aln")                                 , optional: true, emit: aln
     path "versions.yml"                                   , emit: versions
 
     when:

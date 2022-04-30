@@ -8,54 +8,39 @@ include { NCBIGENOMEDOWNLOAD          } from '../../modules/nf-core/modules/ncbi
 workflow GATHER_GENOMES {
 
     take:
-    ncbi_genomes// path(accessions)
+    ncbi_genomes // path(accessions)
 
     main:
     ch_versions = Channel.empty()
-    // ncbi_genomes.view()
-
     ch_paths = Channel.empty()
-
-    // ch_paths = ncbi_genomes.flatten()
-
     ch_paths = ncbi_genomes.splitText()
 
-    // ncbi_genomes.view()
     ch_paths
         .map { create_gca_channels( it ) }
         .unique()
         .set { gca }
-    // gca.view()
-    // gca = gca.unique()
+
     NCBIGENOMEDOWNLOAD (
         gca
     )
     ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
+    prokka_gff = Channel.empty()
+    if( params.ref == null ){
+        prokka_ncbi =  Channel.empty()
+        prokka_ncbi = prokka_ncbi.mix(NCBIGENOMEDOWNLOAD.out.fna)
+        prokka_ncbi = prokka_ncbi.transpose()
+        prokka_ncbi = prokka_ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
-    prokka_ncbi =  Channel.empty()
-    prokka_ncbi = prokka_ncbi.mix(NCBIGENOMEDOWNLOAD.out.fna)
-    prokka_ncbi = prokka_ncbi.transpose()
-    prokka_ncbi = prokka_ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
-
-    PROKKA (
-        prokka_ncbi
-    )
-    ch_versions = ch_versions.mix(PROKKA.out.versions.first())
-
-    // out_gff = Channel.empty()
-    //Channel
-    //    .of( PROKKA.out.gff )
-    //    .view()
-    //    .set{ out_gff }
-    // all_gff.bind( gather_gff() )
-
-
-
+        PROKKA (
+            prokka_ncbi
+        )
+        ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+        prokka_gff = prokka_gff.mix(PROKKA.out.gff)
+    }
 
     emit:
     ncbi = NCBIGENOMEDOWNLOAD.out.fna
-    prokka = PROKKA.out.gff            // channel: [ val(meta), [ assemblies] ]
-    // gff_path = PROKKA.out.gff_path
+    prokka_gff          // channel: [ val(meta), [ assemblies] ]
     versions = ch_versions             // channel: [ versions.yml ]
 }
 
@@ -73,10 +58,8 @@ def create_gca_channels( String gca ) {
     meta.id           = gca
     meta.single_end   = false
     meta.assembly     = true
-    // meta.input        = ncbi['id']
 
     Path filePath = Paths.get("${workflow.workDir}/tmp/${gca}.txt")
-    // File gca_out = Files.createFile(filePath)
     FileWriter fr = new FileWriter("${workflow.workDir}/tmp/${gca}.txt")
     fr.write(gca)
     fr.close()

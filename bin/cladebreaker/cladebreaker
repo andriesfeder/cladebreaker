@@ -7,7 +7,7 @@
 
 # If no user input, print usage
 
-VERSION=0.1.0
+VERSION=0.2.0
 CONTAINER_VERSION="${VERSION%.*}.x"
 CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
 CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"
@@ -39,7 +39,7 @@ else
     OPTS="${WORK_ARG}"
     # echo "nextflow run ${CLADEBREAKER_NF}/main.nf ${OPTS} ${@:1}"
     if nextflow run "${CLADEBREAKER_NF}/main.nf" ${OPTS} "${@:1}"; then
-        # bactopia finished successfully
+        # cladebreaker finished successfully
         if [[ "$*" == *"--cleanup_workdir"* ]] && [[ "${CAN_CLEAN_UP}" -eq 1 ]]; then
             # user asked for work dir to be cleaned up
             echo "Cladebreaker finished successfully! Found '--cleanup_workdir' removing '${WORK_DIR}'"
