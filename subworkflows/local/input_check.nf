@@ -11,7 +11,6 @@ workflow INPUT_CHECK {
     main:
     force_imp()
     valid_sheet = SAMPLESHEET_CHECK ( samplesheet )
-
     valid_sheet
         .csv
         .splitCsv ( header:true, sep:',' )
@@ -61,7 +60,7 @@ def create_fastq_channels(LinkedHashMap row) {
     def array = []
     def array_assembly = []
     if (!file(row.file_1).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
+        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.file_1}"
     }
     if (meta.single_end) {
 
@@ -73,7 +72,7 @@ def create_fastq_channels(LinkedHashMap row) {
         array = [ meta, [ file(target) ]]
     } else if (!meta.single_end && !meta.assembly){
         if (!file(row.file_2).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
+            exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.file_2}"
         }
 
         Path source1 = Paths.get(row.file_1)
@@ -86,8 +85,10 @@ def create_fastq_channels(LinkedHashMap row) {
 
         array = [ meta, [ file(target1), file(target2) ]]
     } else {
+
         return null
     }
+
     return array
 }
 
@@ -109,7 +110,7 @@ def create_assembly_channels(LinkedHashMap row) {
 
     def array = []
     if (!file(row.file_1).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
+        exit 1, "ERROR: Please check input samplesheet -> assembly file does not exist!\n${row.file_1}"
     }
     if (meta.assembly) {
 
@@ -120,6 +121,7 @@ def create_assembly_channels(LinkedHashMap row) {
 
         array = [meta,  file(target) ]
     } else {
+
         return null
     }
 
