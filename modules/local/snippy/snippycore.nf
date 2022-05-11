@@ -39,11 +39,13 @@ process SNIPPY_CORE {
     for(i in paths){
         paths_in = paths_in + " " + i
     }
+
+    //TODO: deal with meta for snippycore
     def meta = [:]
     meta.id     = "all_samples"
     meta.single_end   = null
     meta.assembly     = null
-    println(meta)
+
     // TODO nf-core: If the tool supports multi-threading then you MUST provide the appropriate parameter
     //               using the Nextflow "task" variable e.g. "--threads $task.cpus"
     """
