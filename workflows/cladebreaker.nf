@@ -151,10 +151,11 @@ workflow CLADEBREAKER {
         ROARY (
             roary_input
         )
-
-        RAXMLNG (
-            ROARY.out.aln
-        )
+        if ( params.run_raxml ) {
+            RAXMLNG (
+                ROARY.out.aln
+            )
+        }
     }
     else {
         snippy_input = Channel.empty()
@@ -169,9 +170,11 @@ workflow CLADEBREAKER {
         SNIPPY_CORE (
             snippy_core
         )
-        RAXMLNG (
-            SNIPPY_CORE.out.full_aln
-        )
+        if ( params.run_raxml ) {
+            RAXMLNG (
+                SNIPPY_CORE.out.full_aln
+            )
+        }
     }
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
@@ -183,11 +186,13 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
     if ( params.ref == null) {
         ch_versions = ch_versions.mix(ROARY.out.versions)
-        ch_versions = ch_versions.mix(RAXMLNG.out.versions)
     }
     else {
         ch_versions = ch_versions.mix(SNIPPY.out.versions)
         ch_versions = ch_versions.mix(SNIPPY_CORE.out.versions)
+    }
+    if ( params.run_raxml ){
+        ch_versions = ch_versions.mix(RAXMLNG.out.versions)
     }
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
