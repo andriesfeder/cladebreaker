@@ -9,6 +9,8 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowCladebreaker.initialise(params, log)
 
+errorStrategy 'retry'
+
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
 def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf , params.db ]
@@ -75,8 +77,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/
 def multiqc_report = []
 
 workflow CLADEBREAKER {
-
-    errorStrategy 'retry'
 
     ch_versions = Channel.empty()
 
