@@ -37,7 +37,7 @@ process NCBIGENOMEDOWNLOAD {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def accessions_opt = accessions ? "-A ${accessions}" : ""
-    // ncbi-genome-download -s genbank -F fasta -o genbank_genomes -A Path.Reg.22_gca_list.txt bacteria
+    
     """
     ncbi-genome-download \\
         $args \\
