@@ -1,6 +1,7 @@
 process PROKKA {
     tag "$meta.id"
     label 'process_low'
+    label 'error_retry'
 
     //TODO: Figure out conda build issue.
     conda (params.enable_conda ? "bioconda::prokka=1.14.5" : null)
