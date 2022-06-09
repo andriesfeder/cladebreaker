@@ -7,7 +7,7 @@
 
 # If no user input, print usage
 
-VERSION=0.2.0
+VERSION=0.2.3
 CONTAINER_VERSION="${VERSION%.*}.x"
 CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
 CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"

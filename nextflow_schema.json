@@ -173,6 +173,29 @@
                 }
             }
         },
+        "shovill_options": {
+            "title": "Shovill input options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Shovill specific options, useful for customizing the assembly step of the pipeline.",
+            "help_text": "These options are specific to Shovill. For customization of these options, see the Shovill readme on Github.",
+            "properties": {
+                "shovill_depth": {
+                    "type": "integer",
+                    "description": "Set Shovill depth.",
+                    "default": "150",
+                    "hidden": true,
+                    "help_text": "Use to set a value other than default for Shovill depth."
+                },
+                "shovill_gsize": {
+                    "type":"integer",
+                    "description": "Estimated genome size for Shovill.",
+                    "default":"",
+                    "hidden":true,
+                    "help_text":"Use to set estimated genome size for Shovill. No input sets autodetect (default),=."
+                }
+            }
+        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",

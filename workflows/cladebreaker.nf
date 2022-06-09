@@ -76,6 +76,8 @@ def multiqc_report = []
 
 workflow CLADEBREAKER {
 
+    errorStrategy 'retry'
+
     ch_versions = Channel.empty()
 
     //

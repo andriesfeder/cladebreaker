@@ -28,6 +28,8 @@ process NCBIGENOMEDOWNLOAD {
     tuple val(meta), path("*_assembly_stats.txt")     , emit: stats   , optional: true
     path "versions.yml"                               , emit: versions
 
+    errorStrategy { task.exitStatus in 1 ? 'ignore' : 'retry' }
+
     when:
     task.ext.when == null || task.ext.when
 
