@@ -19,7 +19,7 @@ cladebreaker --version
 
 ## Requirements
 
-To run Cladebreaker successfully, you will need a WhatsGNU database, which can be downloaded from the [WhatsGNU GitHub page](https://github.com/Kalan-Lab/WhatsGNU). For Staphylococcus aureus analysis, we recommend using the Staph. aureus ortholog database as it enables additional downstream analysis. Alternatively, you can use the basic WhatsGNU database, but it will require slight modifications to the commands below.
+To run Cladebreaker successfully, you will need a WhatsGNU database, which can be downloaded from the [WhatsGNU GitHub page](https://github.com/ahmedmagds/WhatsGNU). For Staphylococcus aureus analysis, we recommend using the Staph. aureus ortholog database as it enables additional downstream analysis. Alternatively, you can use the basic WhatsGNU database, but it will require slight modifications to the commands below.
 
 ## Running Cladebreaker
 
