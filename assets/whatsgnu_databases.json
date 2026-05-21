@@ -1,0 +1,104 @@
+{
+  "databases": [
+    {
+      "taxid": 1280,
+      "species": "Staphylococcus aureus",
+      "mode": "ortholog",
+      "url": "https://zenodo.org/records/13388052/files/Saureus.tar.gz?download=1",
+      "size_gb": 14,
+      "genome_count": 68299,
+      "version": "April 2024",
+      "filename": "Saureus.tar.gz"
+    },
+    {
+      "taxid": 573,
+      "species": "Klebsiella pneumoniae",
+      "mode": "ortholog",
+      "url": "https://zenodo.org/record/7812697/files/Kp.zip?download=1",
+      "size_gb": null,
+      "genome_count": 8752,
+      "version": "April 2023",
+      "filename": "Kp.zip"
+    },
+    {
+      "taxid": 287,
+      "species": "Pseudomonas aeruginosa",
+      "mode": "ortholog",
+      "url": "https://www.dropbox.com/sh/r0wvoig3alsz7xg/AABPoNu6FdN7zG2PP9BFezQYa?dl=0",
+      "size_gb": null,
+      "genome_count": 4712,
+      "version": "July 2019",
+      "filename": "Pa.zip"
+    },
+    {
+      "taxid": 1773,
+      "species": "Mycobacterium tuberculosis",
+      "mode": "ortholog",
+      "url": "https://www.dropbox.com/sh/8nqowtd4fcf7dgs/AAAdXiqcxTsEqfIAyNE9TWwRa?dl=0",
+      "size_gb": null,
+      "genome_count": 6563,
+      "version": "July 2019",
+      "filename": "TB.zip"
+    },
+    {
+      "taxid": 1496,
+      "species": "Clostridioides difficile",
+      "mode": "ortholog",
+      "url": "https://zenodo.org/records/13387715/files/Cdiff.tar.gz?download=1",
+      "size_gb": 3.8,
+      "genome_count": 14186,
+      "version": "July 2024",
+      "filename": "Cdiff.tar.gz"
+    },
+    {
+      "taxid": 28901,
+      "species": "Salmonella enterica",
+      "mode": "basic",
+      "url": "https://www.dropbox.com/s/gbjengikpynxo12/Senterica_Enterobase_basic_216642.pickle?dl=0",
+      "size_gb": null,
+      "genome_count": 216642,
+      "version": "August 2019",
+      "filename": "Senterica_Enterobase_basic_216642.pickle"
+    },
+    {
+      "taxid": 287,
+      "species": "Pseudomonas aeruginosa",
+      "mode": "basic",
+      "url": "https://zenodo.org/records/13385380/files/PA_basic.tar.gz?download=1",
+      "size_gb": 19,
+      "genome_count": 31832,
+      "version": "June 2024",
+      "filename": "PA_basic.tar.gz"
+    },
+    {
+      "taxid": 573,
+      "species": "Klebsiella pneumoniae",
+      "mode": "basic",
+      "url": "https://zenodo.org/records/13384718/files/Kp_basic.tar.gz?download=1",
+      "size_gb": 37,
+      "genome_count": 75246,
+      "version": "June 2024",
+      "filename": "Kp_basic.tar.gz"
+    },
+    {
+      "taxid": 562,
+      "species": "Escherichia coli",
+      "mode": "basic",
+      "url": "https://zenodo.org/records/13693568/files/Ecoli_basic.tar.gz?download=1",
+      "size_gb": 90,
+      "genome_count": 211942,
+      "version": "March 2024",
+      "filename": "Ecoli_basic.tar.gz"
+    },
+    {
+      "taxid": 1282,
+      "species": "Staphylococcus epidermidis",
+      "mode": "basic",
+      "url": "https://zenodo.org/records/14751549/files/Sepi_WhatsGNU_basic.txt.gz?download=1",
+      "size_gb": 0.779,
+      "genome_count": 4981,
+      "version": "January 2025",
+      "filename": "Sepi_WhatsGNU_basic.txt.gz"
+    }
+  ]
+}
