@@ -18,8 +18,8 @@ process SNIPPY_CORE {
 
 
     input:
-
     path(paths)
+    path(ref)
 
     output:
     // tuple val(meta), path("*.aln")                       , emit: aln
@@ -48,7 +48,7 @@ process SNIPPY_CORE {
     """
     snippy-core \\
         $args \\
-        --ref "${params.ref}"\\
+        --ref "$ref"\\
         $paths_in
 
     cat <<-END_VERSIONS > versions.yml

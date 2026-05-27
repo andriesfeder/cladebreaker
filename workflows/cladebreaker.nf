@@ -145,7 +145,8 @@ workflow CLADEBREAKER {
         snippy_core = Channel.empty()
         snippy_core = SNIPPY.out.snippy_dir.collect()
         SNIPPY_CORE (
-            snippy_core
+            snippy_core,
+            Channel.fromPath( params.ref )
         )
         if ( params.run_raxml ) {
             RAXMLNG (

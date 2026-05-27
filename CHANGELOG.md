@@ -32,7 +32,9 @@ Initial release of nf-core/cladebreaker, created with the [nf-core](https://nf-c
 
 - **`conda/meta.yaml`**: Replaced `conda` run dependency with `biopython` — having `conda` as a package dependency installed an isolated conda binary inside the environment that returned null for `conda_prefix`, causing Nextflow's conda activation scripts to fail with `/bin/activate: No such file or directory`
 - **`nextflow.config`**: Added `PERL5LIB` to the `env {}` block to fix a macOS conda issue where the Perl binary has a compiled-in `@INC` path that does not include where conda actually installs modules; the value uses `${CONDA_PREFIX}` which bash expands at task runtime after conda activation
+- **`nextflow.config`**: Added `PATH` to the `env {}` block to fix `ModuleNotFoundError: No module named 'yaml'` in CUSTOM_DUMPSOFTWAREVERSIONS (and analogous tool-shadowing bugs) when Nextflow is launched from within an active conda environment. Root cause: Nextflow's `source activate` in each task does a *stacked* activation that appends the task env's `bin/` instead of prepending it, so executables from the outer env (e.g. the user's `cladebreaker` env) shadow the task env's tools. `CONDA_PREFIX` is set correctly to the task env by conda even after a stacked activation; re-prepending `${CONDA_PREFIX}/bin` in the `env {}` block (which runs after activation) restores the correct lookup order for all tasks
 - **`modules/nf-core/modules/prokka/main.nf`**: Updated conda directive from `prokka=1.14.5` to `prokka=1.14.6` — the 1.14.5 package has an unresolvable Perl dependency conflict in current bioconda
+- **`modules/nf-core/modules/multiqc/main.nf`**: Added `conda-forge::setuptools` to the conda directive — `multiqc=1.12` imports `pkg_resources` (from `setuptools`), which is no longer installed by default when conda resolves Python 3.12+ for the environment
 
 ### `Dependencies`
 
