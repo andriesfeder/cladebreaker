@@ -10,7 +10,7 @@ def saveFiles(Map args) {
     if (args.filename) {
         if (args.filename.startsWith('.command')) {
             // Its a Nextflow process file, rename to "nf-<PROCESS_NAME>.*"
-            ext = args.filename.replace(".command.", "")
+            def ext = args.filename.replace(".command.", "")
             final_output = "logs/${process_name}/${logs_subdir}/nf-${process_name}.${ext}"
         } else if (args.filename.endsWith('.stderr.txt') || args.filename.endsWith('.stdout.txt') || args.filename.endsWith('.log')  || args.filename.endsWith('.err') || args.filename.equals('versions.yml')) {
             // Its a version file or  program specific log files
@@ -72,16 +72,4 @@ def initOptions(Map args, String process_name) {
     options.suffix          = args.suffix ?: ''
 
     return options
-}
-def get_resources(profile, max_memory, max_cpus) {
-    /* Adjust memory/cpu requests for standard profile only */
-    def Map resources = [:]
-    // resources.MAX_MEMORY = ['standard', 'docker', 'singularity'].contains(profile) ? _get_max_memory(max_memory).GB : (max_memory).GB
-    resources.MAX_MEMORY = ['standard', 'docker', 'singularity'].contains(profile) ? _get_max_memory(max_memory) : (max_memory)
-    resources.MAX_MEMORY_INT = resources.MAX_MEMORY.toString().split(" ")[0]
-    resources.MAX_CPUS = ['standard', 'docker', 'singularity'].contains(profile) ? _get_max_cpus(max_cpus.toInteger()) : max_cpus.toInteger()
-    resources.MAX_CPUS_75 = Math.round(resources.MAX_CPUS * 0.75)
-    resources.MAX_CPUS_50 = Math.round(resources.MAX_CPUS * 0.50)
-    resources.MAX_CPUS_1 = 1
-    return resources
 }

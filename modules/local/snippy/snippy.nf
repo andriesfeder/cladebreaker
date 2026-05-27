@@ -20,7 +20,7 @@ process SNIPPY {
         'https://depot.galaxyproject.org/singularity/snippy:4.6.0--hdfd78af_2':
         'quay.io/biocontainers/snippy:4.6.0--hdfd78af_1' }"
 
-    publishDir "${params.outdir}/${meta.id}/snippy/", mode: params.publish_dir_mode, overwrite: params.force
+    publishDir { "${params.outdir}/${meta.id}/snippy/" }, mode: params.publish_dir_mode, overwrite: params.force
 
     input:
 

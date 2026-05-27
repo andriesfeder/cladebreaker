@@ -1,40 +1,9 @@
 /*
 ========================================================================================
-    VALIDATE INPUTS
-========================================================================================
-*/
-
-def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
-
-// Validate input parameters
-WorkflowCladebreaker.initialise(params, log)
-
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
-// Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta , params.outdir , params.proteins , params.prodigal_tf , params.db ]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-// Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-
-/*
-========================================================================================
-    CONFIG FILES
-========================================================================================
-*/
-
-ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-/*
-========================================================================================
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ========================================================================================
 */
 
-//
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
 include { INPUT_CHECK    } from '../subworkflows/local/input_check'
 include { GATHER_GENOMES } from '../subworkflows/local/gather_genomes'
 
@@ -44,9 +13,6 @@ include { GATHER_GENOMES } from '../subworkflows/local/gather_genomes'
 ========================================================================================
 */
 
-//
-// MODULE: Installed directly from nf-core/modules
-//
 include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
@@ -61,7 +27,7 @@ include { WHATSGNU_MAIN               } from '../modules/local/whatsgnu/main'
 include { WHATSGNU_GETGENOMES         } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
 include { SNIPPY                      } from '../modules/local/snippy/snippy'
-include {SNIPPY_CORE                  } from '../modules/local/snippy/snippycore'
+include { SNIPPY_CORE                 } from '../modules/local/snippy/snippycore'
 
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -71,10 +37,30 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/
 ========================================================================================
 */
 
-// Info required for completion email and summary
-def multiqc_report = []
-
 workflow CLADEBREAKER {
+
+    // Capture all implicit Nextflow variables for use in onComplete closure
+    // (they are not reliably available inside named-workflow closures in NF 26.x)
+    def wf_workflow   = workflow
+    def wf_params     = params
+    def wf_projectDir = projectDir
+    def wf_log        = log
+
+    // Validate input parameters
+    def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+    WorkflowCladebreaker.initialise(params, log)
+
+    // Check input path parameters to see if they exist
+    def checkPathParamList = [ params.input, params.multiqc_config, params.fasta, params.outdir, params.proteins, params.prodigal_tf, params.db ]
+    checkPathParamList.each { param -> if (param) { file(param, checkIfExists: true) } }
+
+    // Check mandatory parameters
+    if (!params.input) { exit 1, 'Input samplesheet not specified!' }
+    def ch_input = file(params.input)
+
+    // Config files
+    def ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
+    def ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
 
     ch_versions = Channel.empty()
 
@@ -87,11 +73,6 @@ workflow CLADEBREAKER {
 
     //
     // MODULE: Run FastQC
-    // Need to figure out the genome_size, setup_datasets thing to eventually
-    // replace params.genome_size
-
-    //
-    // MODULE: Run FastQC
     //
     assemblyscan_input = Channel.empty()
     FASTQC (
@@ -101,7 +82,6 @@ workflow CLADEBREAKER {
     //
     // MODULE: Run Shovill
     //
-
     SHOVILL (
         INPUT_CHECK.out.reads
     )
@@ -113,35 +93,32 @@ workflow CLADEBREAKER {
     )
 
     //
-    //MODULE: Run Prokka
+    // MODULE: Run Prokka
     //
     prokka_input = Channel.empty()
     prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
     prokka_input = prokka_input.mix(SHOVILL.out.contigs)
-    // prokka_input = prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
 
     PROKKA (
         prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
     )
 
     //
-    //MODULE: Run WhatsGNU
+    // MODULE: Run WhatsGNU
     //
-
     WHATSGNU_MAIN (
         PROKKA.out.faa.combine(Channel.fromPath( params.db ))
     )
 
     //
-    //SUBWORKFLOW: Run NCBI Genome Download and Prokka for each genbank genome
+    // SUBWORKFLOW: Run NCBI Genome Download and Prokka for each genbank genome
     //
-
     GATHER_GENOMES (
         WHATSGNU_MAIN.out.gca_list
     )
 
     //
-    //MODULE: Run Roary
+    // MODULE: Run Roary or Snippy depending on whether a reference is provided
     //
     if ( params.ref == null) {
         roary_input = Channel.empty()
@@ -201,10 +178,10 @@ workflow CLADEBREAKER {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowCladebreaker.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
+    def workflow_summary    = WorkflowCladebreaker.paramsSummaryMultiqc(workflow, summary_params)
+    def ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files = Channel.empty()
+    def ch_multiqc_files = Channel.empty()
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
@@ -214,21 +191,25 @@ workflow CLADEBREAKER {
     MULTIQC (
         ch_multiqc_files.collect()
     )
-    multiqc_report = MULTIQC.out.report.toList()
-    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
-}
+    def multiqc_report = MULTIQC.out.report.toList()
+    ch_versions        = ch_versions.mix(MULTIQC.out.versions)
 
-/*
-========================================================================================
-    COMPLETION EMAIL AND SUMMARY
-========================================================================================
-*/
+    /*
+    ========================================================================================
+        COMPLETION EMAIL AND SUMMARY
+    ========================================================================================
+    */
 
-workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
+    wf_workflow.onComplete {
+        try {
+            if (wf_params.email || wf_params.email_on_fail) {
+                NfcoreTemplate.email(wf_workflow, wf_params, summary_params, wf_projectDir, wf_log, multiqc_report)
+            }
+            NfcoreTemplate.summary(wf_workflow, wf_params, wf_log)
+        } catch (Exception e) {
+            wf_log.warn "Could not complete workflow notifications: ${e.message}"
+        }
     }
-    NfcoreTemplate.summary(workflow, params, log)
 }
 
 /*

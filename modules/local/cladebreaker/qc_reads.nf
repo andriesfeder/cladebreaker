@@ -1,9 +1,6 @@
 nextflow.enable.dsl = 2
 
-// Assess cpu and memory of current system
-include { get_resources; initOptions; saveFiles } from '../../../lib/nf/functions'
-RESOURCES = get_resources(workflow.profile, params.max_memory, params.max_cpus)
-options = initOptions(params.containsKey('options') ? params.options : [:], 'qc_reads')
+include { initOptions; saveFiles } from '../../../lib/nf/functions'
 
 process QC_READS {
     /* Clean up Illumina reads */
@@ -11,7 +8,7 @@ process QC_READS {
     label "base_mem_4gb"
     label "qc_reads"
 
-    publishDir "${params.outdir}/${meta.id}", mode: params.publish_dir_mode, overwrite: params.force, saveAs: { filename -> saveFiles(filename:filename, opts: options) }
+    publishDir { "${params.outdir}/${meta.id}" }, mode: params.publish_dir_mode, overwrite: params.force, saveAs: { filename -> saveFiles(filename:filename, opts: initOptions(params.containsKey('options') ? params.options : [:], 'qc_reads')) }
 
     input:
     tuple val(meta), path(fq), path(extra), path(genome_size)
@@ -26,12 +23,13 @@ process QC_READS {
     path "*-error.txt", optional: true
 
     shell:
+    def options = initOptions(params.containsKey('options') ? params.options : [:], 'qc_reads')
     options.ignore = [ '-genome-size.txt', extra]
     meta.single_end = fq[1] == null ? true : false
     is_assembly = meta.runtype.startsWith('assembly') ? true : false
     qin = meta.runtype.startsWith('assembly') ? 'qin=33' : 'qin=auto'
-    adapters = params.adapters ? path(params.adapters) : 'adapters'
-    phix = params.phix ? path(params.phix) : 'phix'
+    adapters = params.adapters ? file(params.adapters) : 'adapters'
+    phix = params.phix ? file(params.phix) : 'phix'
     adapter_opts = meta.single_end ? "" : "in2=${fq[1]} out2=adapter-r2.fq"
     phix_opts = meta.single_end ? "" : "in2=adapter-r2.fq out2=phix-r2.fq"
     lighter_opts = meta.single_end ? "" : "-r phix-r2.fq"

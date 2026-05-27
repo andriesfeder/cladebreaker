@@ -35,10 +35,7 @@ process SNIPPY_CORE {
     script:
     def args = task.ext.args ?: ''
     // def prefix = task.ext.prefix ?: "${meta.id}"
-    def paths_in = ""
-    for(i in paths){
-        paths_in = paths_in + " " + i
-    }
+    def paths_in = paths instanceof List ? paths.join(' ') : paths
 
     //TODO: deal with meta for snippycore
     def meta = [:]

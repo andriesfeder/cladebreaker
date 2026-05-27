@@ -250,7 +250,7 @@ class NfcoreTemplate {
             ${colors.blue} / /   / /   / /| | / / / / __/                ${colors.green}  | '-----${colors.reset}
             ${colors.blue}/ /___/ /___/ ___ |/ /_/ / /___                ${colors.green}--+${colors.reset}
             ${colors.blue}\\____/_____/_/  |_/_____/_____/ __ ________   ${colors.green}  |  ,---${colors.reset}
-            ${colors.blue}   / __ )/ __ \/ ____/   |  / //_// ____/ __ \ ${colors.green}  '-,+${colors.reset}
+            ${colors.blue}   / __ )/ __ \\/ ____/   |  / //_// ____/ __ \\ ${colors.green}  '-,+${colors.reset}
             ${colors.blue}  / __  / /_/ / __/ / /| | / ,<  / __/ / /_/ / ${colors.green}     | ,--${colors.reset}
             ${colors.blue} / /_/ / _, _/ /___/ ___ |/ /| |/ /___/ _, _/  ${colors.green}     '-+${colors.reset}
             ${colors.blue}/_____/_/ |_/_____/_/  |_/_/ |_/_____/_/ |_|   ${colors.green}       '----${colors.reset}

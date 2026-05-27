@@ -6,7 +6,7 @@ process ASSEMBLYSCAN {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/assembly-scan:0.4.1--pyhdfd78af_0' :
         'quay.io/biocontainers/assembly-scan:0.4.1--pyhdfd78af_0' }"
-    publishDir "${params.outdir}/${meta.id}/assembly/assembly_qc", mode: params.publish_dir_mode, overwrite: params.force 
+    publishDir { "${params.outdir}/${meta.id}/assembly/assembly_qc" }, mode: params.publish_dir_mode, overwrite: params.force 
     input:
     tuple val(meta), path(assembly)
 

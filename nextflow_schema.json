@@ -59,15 +59,24 @@
                     "description": "Path to precompressed WhatsGNU database."
                 },
                 "o": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "description": "Specifies that precompressed WhatsGNU database is ortholog."
                 },
                 "b": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "description": "Specifies that precompressed WhatsGNU database is basic."
                 },
                 "topgenomes_count": {
-                    "type": "integer",
+                    "type": [
+                        "integer",
+                        "string"
+                    ],
                     "default": 3,
                     "description": "Number of topgenomes for WhatsGNU to find."
                 }
@@ -188,11 +197,11 @@
                     "help_text": "Use to set a value other than default for Shovill depth."
                 },
                 "shovill_gsize": {
-                    "type":"integer",
+                    "type": "integer",
                     "description": "Estimated genome size for Shovill.",
-                    "default":"",
-                    "hidden":true,
-                    "help_text":"Use to set estimated genome size for Shovill. No input sets autodetect (default),=."
+                    "default": "",
+                    "hidden": true,
+                    "help_text": "Use to set estimated genome size for Shovill. No input sets autodetect (default),=."
                 }
             }
         },
@@ -208,7 +217,11 @@
                     "description": "NCBI TaxID of the target species for database construction.",
                     "help_text": "Provide the NCBI Taxonomy ID for the species you want to build a WhatsGNU database for (e.g. 1280 for Staphylococcus aureus). The build workflow will query NCBI Assembly for all available genomes under this TaxID, download them, annotate with Prokka, and compress them into a WhatsGNU database.",
                     "fa_icon": "fas fa-bacteria",
-                    "examples": [1280, 562, 573]
+                    "examples": [
+                        1280,
+                        562,
+                        573
+                    ]
                 },
                 "genome_count": {
                     "type": "integer",
@@ -220,7 +233,10 @@
                     "type": "string",
                     "description": "WhatsGNU database mode to build: 'basic' or 'ortholog'.",
                     "default": "basic",
-                    "enum": ["basic", "ortholog"],
+                    "enum": [
+                        "basic",
+                        "ortholog"
+                    ],
                     "help_text": "Controls which compression mode WhatsGNU uses when building the database.\n\n- **basic**: Compresses all proteins across all genomes. Suitable for any species. Recommended default.\n- **ortholog**: Groups proteins by ortholog clusters before compression. Provides additional rarity scoring but requires a well-sampled reference set.\n\nThe resulting database mode must match the `--o` (ortholog) or `--b` (basic) flag used when running the main cladebreaker pipeline.",
                     "fa_icon": "fas fa-sliders-h"
                 }
@@ -317,7 +333,10 @@
                     ]
                 },
                 "force": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "default": false,
                     "description": "Nextflow will overwrite existing output files.",
                     "fa_icon": "fas fa-recycle",

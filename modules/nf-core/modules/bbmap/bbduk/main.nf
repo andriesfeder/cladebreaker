@@ -7,7 +7,7 @@ process BBMAP_BBDUK {
         'https://depot.galaxyproject.org/singularity/bbmap:38.90--he522d1c_1' :
         'quay.io/biocontainers/bbmap:38.90--he522d1c_1' }"
 
-    publishDir "${params.outdir}/${meta.id}/fastqs", mode: params.publish_dir_mode, overwrite: params.force 
+    publishDir { "${params.outdir}/${meta.id}/fastqs" }, mode: params.publish_dir_mode, overwrite: params.force 
 
     input:
     tuple val(meta), path(reads)

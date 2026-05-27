@@ -2,8 +2,8 @@
 // Check input samplesheet and get read channels
 //
 
-include { PROKKA                      } from '../../modules/nf-core/modules/prokka/main'
-include { NCBIGENOMEDOWNLOAD          } from '../../modules/nf-core/modules/ncbigenomedownload/main'
+include { PROKKA             } from '../../modules/nf-core/modules/prokka/main'
+include { NCBIGENOMEDOWNLOAD } from '../../modules/nf-core/modules/ncbigenomedownload/main'
 
 workflow GATHER_GENOMES {
 
@@ -44,53 +44,41 @@ workflow GATHER_GENOMES {
     versions = ch_versions             // channel: [ versions.yml ]
 }
 
-// Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
-
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.io.FileWriter
-import java.nio.channels.FileChannel
-
-
 def create_gca_channels( String gca ) {
     gca = gca.trim()
     def meta = [:]
-    meta.id           = gca
-    meta.single_end   = false
-    meta.assembly     = true
+    meta.id         = gca
+    meta.single_end = false
+    meta.assembly   = true
 
-    Path filePath = Paths.get("${workflow.workDir}/tmp/${gca}.txt")
-    FileWriter fr = new FileWriter("${workflow.workDir}/tmp/${gca}.txt")
+    def filePath = java.nio.file.Paths.get("${workflow.workDir}/tmp/${gca}.txt")
+    def fr = new java.io.FileWriter("${workflow.workDir}/tmp/${gca}.txt")
     fr.write(gca)
     fr.close()
 
-    array = [ meta, file(filePath) ]
-
+    def array = [ meta, file(filePath) ]
     return array
 }
-def gather_gff(String t ) {
+
+def gather_gff(String t) {
     def meta = [:]
-    meta.id           = "ALL_SAMPLES"
+    meta.id = "ALL_SAMPLES"
 
     new File("${workflow.workDir}/tmp/gff/").mkdirs()
-    Path filePath = Paths.get("${workflow.workDir}/tmp/gff/")
+    def filePath = java.nio.file.Paths.get("${workflow.workDir}/tmp/gff/")
 
-    File dir = new File("${params.outdir}")
-    File[] listing = dir.listFiles()
-    for (File sample : listing) {
-        if (sample.isDirectory()){
+    def dir = new File("${params.outdir}")
+    def listing = dir.listFiles()
+    listing.each { sample ->
+        if (sample.isDirectory()) {
             print(sample)
         }
-        File annotation_path = new File("${sample}/annotation/*.gff")
+        def annotation_path = new File("${sample}/annotation/*.gff")
         if (annotation_path.exists()) {
-            String path = "${workflow.workDir}/tmp/gff/"
-            Files.copy(annotation_path.toPath(), (new File(path + annotation_path.getName())).toPath())
+            def path = "${workflow.workDir}/tmp/gff/"
+            java.nio.file.Files.copy(annotation_path.toPath(), (new File(path + annotation_path.getName())).toPath())
         }
     }
-    array = [meta, file(filePath)]
-
+    def array = [meta, file(filePath)]
     return array
-
 }
-
-
