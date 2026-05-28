@@ -2,10 +2,12 @@ process PIRATE {
     tag "$meta.id"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::pirate=1.0.4" : null)
+    conda (params.enable_conda ? "bioconda::pirate=1.0.5" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/pirate:1.0.4--hdfd78af_1' :
-        'quay.io/biocontainers/pirate:1.0.4--hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/pirate:1.0.5--hdfd78af_3' :
+        'quay.io/biocontainers/pirate:1.0.5--hdfd78af_3' }"
+
+    publishDir { "${params.outdir}/pirate" }, mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(gff)

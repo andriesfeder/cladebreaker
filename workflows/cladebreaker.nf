@@ -18,8 +18,9 @@ include { MULTIQC                     } from '../modules/nf-core/modules/multiqc
 include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
 include { ASSEMBLYSCAN                } from '../modules/nf-core/modules/assemblyscan/main'
 include { PROKKA                      } from '../modules/nf-core/modules/prokka/main'
-include { ROARY                       } from '../modules/nf-core/modules/roary/main'
+include { PANAROO                     } from '../modules/nf-core/modules/panaroo/main'
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
+include { ROARY                       } from '../modules/nf-core/modules/roary/main'
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigenomedownload/main'
 
@@ -118,20 +119,31 @@ workflow CLADEBREAKER {
     )
 
     //
-    // MODULE: Run Roary or Snippy depending on whether a reference is provided
+    // MODULE: Run pan-genome tool (Panaroo or PIRATE) or Snippy depending on whether a reference is provided
     //
     if ( params.ref == null) {
-        roary_input = Channel.empty()
-        roary_input = roary_input.mix(GATHER_GENOMES.out.prokka_gff.last())
-        roary_input = roary_input.combine(Channel.fromPath("${workflow.workDir}/tmp/gff/"))
+        // Collect GFF files from user assemblies and downloaded reference genomes
+        all_gff = PROKKA.out.gff.map { meta, gff -> gff }
+        all_gff = all_gff.mix(GATHER_GENOMES.out.prokka_gff.map { meta, gff -> gff })
+        def pg_meta = [id: 'all_samples', single_end: false, assembly: false]
+        pangenome_input = all_gff.collect().map { gffs -> [pg_meta, gffs] }
 
-        ROARY (
-            roary_input
-        )
+        if ( params.pangenome_tool == 'pirate' ) {
+            PIRATE ( pangenome_input )
+            pangenome_aln = PIRATE.out.aln.map { meta, aln -> aln }
+            ch_versions   = ch_versions.mix(PIRATE.out.versions)
+        } else if ( params.pangenome_tool == 'roary' ) {
+            ROARY ( pangenome_input )
+            pangenome_aln = ROARY.out.aln.map { meta, aln -> aln }
+            ch_versions   = ch_versions.mix(ROARY.out.versions)
+        } else {
+            PANAROO ( pangenome_input )
+            pangenome_aln = PANAROO.out.aln.map { meta, aln -> aln }
+            ch_versions   = ch_versions.mix(PANAROO.out.versions)
+        }
+
         if ( params.run_raxml ) {
-            RAXMLNG (
-                ROARY.out.aln
-            )
+            RAXMLNG ( pangenome_aln )
         }
     }
     else {
@@ -162,10 +174,7 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
     ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
-    if ( params.ref == null) {
-        ch_versions = ch_versions.mix(ROARY.out.versions)
-    }
-    else {
+    if ( params.ref != null) {
         ch_versions = ch_versions.mix(SNIPPY.out.versions)
         ch_versions = ch_versions.mix(SNIPPY_CORE.out.versions)
     }

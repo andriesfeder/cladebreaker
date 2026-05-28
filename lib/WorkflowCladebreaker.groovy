@@ -10,6 +10,16 @@ class WorkflowCladebreaker {
     public static void initialise(params, log) {
         genomeExistsError(params, log)
 
+        if (params.pangenome_tool == 'roary' && params.enable_conda) {
+            log.warn "=============================================================================\n" +
+                "  WARNING: Roary cannot be installed via conda due to a Perl dependency\n" +
+                "  conflict in current bioconda. To use Roary, run with a container profile\n" +
+                "  (-profile docker or -profile singularity) instead of -profile conda.\n" +
+                "  Conda-compatible alternatives: --pangenome_tool panaroo (default) or\n" +
+                "  --pangenome_tool pirate.\n" +
+                "============================================================================="
+        }
+
         //TODO: clean this up
 
         //if (!params.fasta) {
