@@ -21,7 +21,7 @@ include { DOWNLOAD_GENOMES  } from '../modules/local/build/download_genomes'
 include { PROKKA            } from '../modules/nf-core/modules/prokka/main'
 include { WHATSGNU_BUILD_DB } from '../modules/local/whatsgnu/database_customizer'
 
-workflow CLADEBREAKER_BUILD {
+workflow BUILD {
 
     if (!params.taxid) {
         exit 1, """

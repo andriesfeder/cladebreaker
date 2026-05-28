@@ -18,21 +18,7 @@ nextflow.enable.dsl = 2
 */
 
 include { CLADEBREAKER       } from './workflows/cladebreaker'
-include { CLADEBREAKER_BUILD } from './workflows/build'
-
-//
-// WORKFLOW: Run main cladebreaker analysis pipeline
-//
-workflow NFCORE_CLADEBREAKER {
-    CLADEBREAKER ()
-}
-
-//
-// WORKFLOW: Build a WhatsGNU database for a given NCBI TaxID
-//
-workflow NFCORE_BUILD {
-    CLADEBREAKER_BUILD ()
-}
+include { BUILD              } from './workflows/build'
 
 /*
 ========================================================================================
@@ -46,7 +32,7 @@ workflow NFCORE_BUILD {
 //
 workflow {
     WorkflowMain.initialise(workflow, params, log)
-    NFCORE_CLADEBREAKER ()
+    CLADEBREAKER ()
 }
 
 /*

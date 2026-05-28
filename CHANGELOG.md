@@ -34,10 +34,16 @@ Initial release of nf-core/cladebreaker, created with the [nf-core](https://nf-c
 - **`nextflow.config`**: Added `PERL5LIB` to the `env {}` block to fix a macOS conda issue where the Perl binary has a compiled-in `@INC` path that does not include where conda actually installs modules; the value uses `${CONDA_PREFIX}` which bash expands at task runtime after conda activation
 - **`nextflow.config`**: Added `PATH` to the `env {}` block to fix `ModuleNotFoundError: No module named 'yaml'` in CUSTOM_DUMPSOFTWAREVERSIONS (and analogous tool-shadowing bugs) when Nextflow is launched from within an active conda environment. Root cause: Nextflow's `source activate` in each task does a *stacked* activation that appends the task env's `bin/` instead of prepending it, so executables from the outer env (e.g. the user's `cladebreaker` env) shadow the task env's tools. `CONDA_PREFIX` is set correctly to the task env by conda even after a stacked activation; re-prepending `${CONDA_PREFIX}/bin` in the `env {}` block (which runs after activation) restores the correct lookup order for all tasks
 - **`modules/nf-core/modules/prokka/main.nf`**: Updated conda directive from `prokka=1.14.5` to `prokka=1.14.6` — the 1.14.5 package has an unresolvable Perl dependency conflict in current bioconda
-- **`modules/nf-core/modules/multiqc/main.nf`**: Added `conda-forge::setuptools` to the conda directive — `multiqc=1.12` imports `pkg_resources` (from `setuptools`), which is no longer installed by default when conda resolves Python 3.12+ for the environment
+- **`modules/nf-core/modules/multiqc/main.nf`**: Upgraded from `multiqc=1.12` to `multiqc=1.35` — versions prior to 1.21 import `pkg_resources` (from `setuptools`), which is no longer included by default when conda resolves Python 3.12+ environments; multiqc 1.21+ replaced `pkg_resources` with `importlib.metadata`
+- **`modules/nf-core/modules/raxmlng/main.nf`**: Upgraded from `raxml-ng=1.0.3` to `raxml-ng=2.0.1`; updated container tags to `2.0.1--haec14ce_0`
+- **`main.nf`**: Removed redundant `NFCORE_CLADEBREAKER` and `NFCORE_BUILD` wrapper workflows; entry-point `workflow {}` block now calls `CLADEBREAKER()` directly; fixed `BUILD` include to match the actual workflow name in `build.nf`
+- **`workflows/build.nf`**: Renamed `workflow CLADEBREAKER_BUILD` to `workflow BUILD` for a cleaner entry-point name (`-entry BUILD`)
+- **`assets/email_template.html`**, **`nextflow.config`**: Rebranded pipeline references from `nf-core/cladebreaker` to `cladebreaker`
 
 ### `Dependencies`
 
 - Updated Prokka: `1.14.5` → `1.14.6`
+- Updated MultiQC: `1.12` → `1.35`
+- Updated RAxML-NG: `1.0.3` → `2.0.1`
 
 ### `Deprecated`

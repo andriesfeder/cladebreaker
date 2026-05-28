@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/cladebreaker/master/nextflow_schema.json",
-    "title": "nf-core/cladebreaker pipeline parameters",
-    "description": "nf-core implementation of the Planet Lab cladebreaker pipeline.",
+    "title": "cladebreaker pipeline parameters",
+    "description": "implementation of the Planet Lab cladebreaker pipeline.",
     "type": "object",
     "definitions": {
         "input_output_options": {
