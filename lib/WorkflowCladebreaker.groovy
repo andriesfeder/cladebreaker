@@ -1,5 +1,5 @@
 //
-// This file holds several functions specific to the workflow/cladebreaker.nf in the nf-core/cladebreaker pipeline
+// This file holds several functions specific to the workflow/cladebreaker.nf in the cladebreaker pipeline
 //
 
 class WorkflowCladebreaker {

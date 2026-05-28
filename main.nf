@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/cladebreaker
+    cladebreaker
 ========================================================================================
-    Github : https://github.com/nf-core/cladebreaker
+    Github : https://github.com/andriesfeder/cladebreaker
     Website: https://nf-co.re/cladebreaker
     Slack  : https://nfcore.slack.com/channels/cladebreaker
 ----------------------------------------------------------------------------------------
