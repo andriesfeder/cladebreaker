@@ -10,7 +10,7 @@ build:
   noarch: generic
   number: 0
   run_exports:
-    - {{ pin_subpackage('cladebreaker', max_pin="x") }}
+    - {{ name }}
 requirements:
   host:
     - python >=3.10
