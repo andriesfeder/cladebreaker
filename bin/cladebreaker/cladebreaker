@@ -21,7 +21,7 @@
 #   cladebreaker prepare --fastqs /path/to/reads/ --output samplesheet.csv
 #   cladebreaker citations
 
-VERSION="1.0dev"
+VERSION="0.3.0"
 CONTAINER_VERSION="${VERSION%.*}.x"
 CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
 CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"

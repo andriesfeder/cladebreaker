@@ -9,9 +9,11 @@ source:
 build:
   noarch: generic
   number: 0
+  run_exports:
+    - {{ pin_subpackage('cladebreaker', max_pin="x") }}
 requirements:
   host:
-    - python=3.10
+    - python = 3.10
   run:
     - python
     - biopython
