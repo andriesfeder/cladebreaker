@@ -5,7 +5,7 @@ package:
   version: {{ version }}
 source:
   url: https://github.com/andriesfeder/cladebreaker/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: REPLACE_WITH_SHA256_OF_v0.3.0_TARBALL
+  sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 build:
   noarch: generic
   number: 0
