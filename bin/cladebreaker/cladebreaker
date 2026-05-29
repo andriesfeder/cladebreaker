@@ -1,48 +1,102 @@
 #!/usr/bin/env bash
+# cladebreaker
+#
+# Main entry point for the cladebreaker pipeline, inspired by the Bactopia
+# pipeline (https://bactopia.github.io) and Will Rowe's DRAX pipeline
+# (https://github.com/will-rowe/drax).
+#
+# By default, executes the main Nextflow analysis workflow. Additional
+# subcommands are available:
+#
+#   cladebreaker build      - Download or build a WhatsGNU database for a species
+#   cladebreaker prepare    - Generate an input samplesheet from FASTQs/assemblies
+#   cladebreaker citations  - Print citations for all tools used by cladebreaker
+#   cladebreaker version    - Print the cladebreaker version
+#   cladebreaker --help     - Print main pipeline usage
+#
+# Examples:
+#   cladebreaker --input samplesheet.csv --db /path/to/db.pickle -profile conda
+#   cladebreaker build --taxid 1280
+#   cladebreaker build --taxid 470 --genome_count 100 --outdir ./databases
+#   cladebreaker prepare --fastqs /path/to/reads/ --output samplesheet.csv
+#   cladebreaker citations
 
-# This is a wrapper around cladebreaker for packaging the Conda recipe. It has
-# been inspired by a similar wrapper in Will Rowe's DRAX pipeline
-# (https://github.com/will-rowe/drax) and Robert A. Petit III's Bactopia pipeline
-# (https://bactopia.github.io).
-
-# If no user input, print usage
-
-VERSION=0.2.3
+VERSION="1.0dev"
 CONTAINER_VERSION="${VERSION%.*}.x"
 CONDA_ENV=$(which cladebreaker | sed 's=bin/cladebreaker==')
 CLADEBREAKER_NF="${CONDA_ENV}/share/cladebreaker-${CONTAINER_VERSION}"
+BIN_DIR="${CLADEBREAKER_NF}/bin"
 
-
+# ---------------------------------------------------------------------------
+# No arguments: print usage summary
+# ---------------------------------------------------------------------------
 if [[ $# == 0 ]]; then
-
     echo "cladebreaker - v${VERSION}"
-    exit
+    echo ""
+    echo "Usage:"
+    echo "  cladebreaker [options]                 Run the main analysis pipeline"
+    echo "  cladebreaker build [options]           Download or build a WhatsGNU database"
+    echo "  cladebreaker prepare [options]         Generate an input samplesheet"
+    echo "  cladebreaker citations                 Print tool citations"
+    echo "  cladebreaker version                   Print cladebreaker version"
+    echo ""
+    echo "Pipeline usage:"
+    echo "  cladebreaker --help"
+    echo ""
+    echo "Subcommand usage:"
+    echo "  cladebreaker build --help"
+    echo "  cladebreaker prepare --help"
+    echo ""
+    echo "Example commands:"
+    echo "  cladebreaker --input samplesheet.csv --db /path/to/db.pickle -profile conda"
+    echo "  cladebreaker build --taxid 1280"
+    echo "  cladebreaker build --taxid 470 --genome_count 100 --outdir ./databases"
+    echo "  cladebreaker prepare --fastqs /path/to/reads/ --output samplesheet.csv"
+    echo "  cladebreaker prepare --assemblies /path/to/assemblies/ --output samplesheet.csv"
+    echo ""
+    exit 0
 fi
 
-if [[ "$1" == "version" ]] || [[ "$1" == "--version" ]]; then
-    echo "cladebreaker ${VERSION}"
+# ---------------------------------------------------------------------------
+# Subcommand dispatch
+# ---------------------------------------------------------------------------
+if [[ "$1" == "build" ]]; then
+    "${BIN_DIR}/cladebreaker-build.py" "${@:2}"
+
+elif [[ "$1" == "prepare" ]]; then
+    "${BIN_DIR}/cladebreaker-prepare.py" "${@:2}"
+
+elif [[ "$1" == "citations" ]]; then
+    "${BIN_DIR}/cladebreaker-citations.py" "${@:2}"
+
+elif [[ "$1" == "version" ]] || [[ "$1" == "--version" ]]; then
+    echo "cladebreaker v${VERSION}"
+
+elif [[ "$1" == "citation" ]] || [[ "$1" == "--citation" ]]; then
+    echo ""
+    echo "If you use cladebreaker in your research, please cite:"
+    echo ""
+    echo "  Feder AF, Planet PJ (2022) cladebreaker: a Nextflow pipeline for"
+    echo "  whole-genome sequencing-based clade assignment of bacterial isolates."
+    echo "  https://github.com/andriesfeder/cladebreaker"
+    echo ""
 
 else
-
+    # Default: run the main Nextflow pipeline
     WORK_DIR=""
     WORK_ARG=""
     CAN_CLEAN_UP=1
 
     if echo "$*" | sed -r 's/ ([-]+)/\n\1/g' | grep "^-w \|-work-dir" > /dev/null; then
-        # User specified a work directory
         CAN_CLEAN_UP=0
     else
-        # User did not specify a work directory, we'll use custom one based on workflow name
-        WORK_DIR="$(pwd)/work/${WF}"
+        WORK_DIR="$(pwd)/work/cladebreaker"
         WORK_ARG="-w ${WORK_DIR}"
     fi
-    OPTS="${WORK_ARG}"
-    # echo "nextflow run ${CLADEBREAKER_NF}/main.nf ${OPTS} ${@:1}"
-    if nextflow run "${CLADEBREAKER_NF}/main.nf" ${OPTS} "${@:1}"; then
-        # cladebreaker finished successfully
+
+    if nextflow run "${CLADEBREAKER_NF}/main.nf" ${WORK_ARG} "${@:1}"; then
         if [[ "$*" == *"--cleanup_workdir"* ]] && [[ "${CAN_CLEAN_UP}" -eq 1 ]]; then
-            # user asked for work dir to be cleaned up
-            echo "Cladebreaker finished successfully! Found '--cleanup_workdir' removing '${WORK_DIR}'"
+            echo "Cladebreaker finished successfully! Removing work directory '${WORK_DIR}'"
             rm -rf "${WORK_DIR}"
         fi
     else

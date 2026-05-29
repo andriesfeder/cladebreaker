@@ -14,7 +14,7 @@ process WHATSGNU_GETGENOMES {
         'https://depot.galaxyproject.org/singularity/whatsgnu:1.3--hdfd78af_0':
         'quay.io/biocontainers/whatsgnu:1.3--hdfd78af_0' }"
 
-    publishDir "${params.outdir}/${meta.id}/WhatsGNU", mode: params.publish_dir_mode, overwrite: params.force
+    publishDir { "${params.outdir}/${meta.id}/WhatsGNU" }, mode: params.publish_dir_mode, overwrite: params.force
 
 
     input:

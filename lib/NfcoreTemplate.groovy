@@ -238,18 +238,23 @@ class NfcoreTemplate {
     }
 
     //
-    // nf-core logo
+    // cladebreaker logo
     //
     public static String logo(workflow, monochrome_logs) {
         Map colors = logColours(monochrome_logs)
         String.format(
             """\n
             ${dashedLine(monochrome_logs)}
-                                                    ${colors.green},--.${colors.black}/${colors.green},-.${colors.reset}
-            ${colors.blue}        ___     __   __   __   ___     ${colors.green}/,-._.--~\'${colors.reset}
-            ${colors.blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${colors.yellow}}  {${colors.reset}
-            ${colors.blue}  | \\| |       \\__, \\__/ |  \\ |___     ${colors.green}\\`-._,-`-,${colors.reset}
-                                                    ${colors.green}`._,._,\'${colors.reset}
+            ${colors.blue}  ________    ___    ____  ______              ${colors.green}    ,------${colors.reset}
+            ${colors.blue}  / ____/ /   /   |  / __ \\/ ____/            ${colors.green}  ,-+${colors.reset}
+            ${colors.blue} / /   / /   / /| | / / / / __/                ${colors.green}  | '-----${colors.reset}
+            ${colors.blue}/ /___/ /___/ ___ |/ /_/ / /___                ${colors.green}--+${colors.reset}
+            ${colors.blue}\\____/_____/_/  |_/_____/_____/ __ ________   ${colors.green}  |  ,---${colors.reset}
+            ${colors.blue}   / __ )/ __ \\/ ____/   |  / //_// ____/ __ \\ ${colors.green}  '-,+${colors.reset}
+            ${colors.blue}  / __  / /_/ / __/ / /| | / ,<  / __/ / /_/ / ${colors.green}     | ,--${colors.reset}
+            ${colors.blue} / /_/ / _, _/ /___/ ___ |/ /| |/ /___/ _, _/  ${colors.green}     '-+${colors.reset}
+            ${colors.blue}/_____/_/ |_/_____/_/  |_/_/ |_/_____/_/ |_|   ${colors.green}       '----${colors.reset}
+
             ${colors.purple}  ${workflow.manifest.name} v${workflow.manifest.version}${colors.reset}
             ${dashedLine(monochrome_logs)}
             """.stripIndent()

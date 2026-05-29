@@ -18,8 +18,8 @@ process SNIPPY_CORE {
 
 
     input:
-
     path(paths)
+    path(ref)
 
     output:
     // tuple val(meta), path("*.aln")                       , emit: aln
@@ -35,10 +35,7 @@ process SNIPPY_CORE {
     script:
     def args = task.ext.args ?: ''
     // def prefix = task.ext.prefix ?: "${meta.id}"
-    def paths_in = ""
-    for(i in paths){
-        paths_in = paths_in + " " + i
-    }
+    def paths_in = paths instanceof List ? paths.join(' ') : paths
 
     //TODO: deal with meta for snippycore
     def meta = [:]
@@ -51,7 +48,7 @@ process SNIPPY_CORE {
     """
     snippy-core \\
         $args \\
-        --ref "${params.ref}"\\
+        --ref "$ref"\\
         $paths_in
 
     cat <<-END_VERSIONS > versions.yml

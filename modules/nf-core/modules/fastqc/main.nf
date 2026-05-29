@@ -7,7 +7,7 @@ process FASTQC {
         'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
         'quay.io/biocontainers/fastqc:0.11.9--0' }"
     
-    publishDir "${params.outdir}/${meta.id}/fastqc", mode: params.publish_dir_mode, overwrite: params.force
+    publishDir { "${params.outdir}/${meta.id}/fastqc" }, mode: params.publish_dir_mode, overwrite: params.force
 
     input:
     tuple val(meta), path(reads)

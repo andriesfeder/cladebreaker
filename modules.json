@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/cladebreaker",
-    "homePage": "https://github.com/nf-core/cladebreaker",
+    "name": "cladebreaker",
+    "homePage": "https://github.com/andriesfeder/cladebreaker/",
     "repos": {
         "nf-core/modules": {
             "assemblyscan": {

@@ -14,7 +14,7 @@ requirements:
     - python=3.10
   run:
     - python
-    - conda
+    - biopython
     - nextflow
     - graphviz
 test:

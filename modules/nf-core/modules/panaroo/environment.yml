@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::panaroo=1.6.0
+  - conda-forge::biopython<=1.86

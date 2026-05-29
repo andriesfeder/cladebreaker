@@ -1,4 +1,4 @@
-# nf-core/cladebreaker: Output
+# cladebreaker: Output
 
 ## Introduction
 

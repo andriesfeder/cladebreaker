@@ -9,7 +9,7 @@ process SHOVILL {
         'https://depot.galaxyproject.org/singularity/shovill:1.1.0--0' :
         'quay.io/biocontainers/shovill:1.1.0--0' }"
 
-    publishDir "${params.outdir}/${meta.id}/assembly", mode: params.publish_dir_mode, overwrite: params.force 
+    publishDir { "${params.outdir}/${meta.id}/assembly" }, mode: params.publish_dir_mode, overwrite: params.force 
 
     input:
     tuple val(meta), path(reads)

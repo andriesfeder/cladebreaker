@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/cladebreaker
+    cladebreaker
 ========================================================================================
-    Github : https://github.com/nf-core/cladebreaker
+    Github : https://github.com/andriesfeder/cladebreaker
     Website: https://nf-co.re/cladebreaker
     Slack  : https://nfcore.slack.com/channels/cladebreaker
 ----------------------------------------------------------------------------------------
@@ -13,34 +13,12 @@ nextflow.enable.dsl = 2
 
 /*
 ========================================================================================
-    GENOME PARAMETER VALUES
-========================================================================================
-*/
-
-params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
-
-/*
-========================================================================================
-    VALIDATE & PRINT PARAMETER SUMMARY
-========================================================================================
-*/
-
-WorkflowMain.initialise(workflow, params, log)
-
-/*
-========================================================================================
     NAMED WORKFLOW FOR PIPELINE
 ========================================================================================
 */
 
-include { CLADEBREAKER } from './workflows/cladebreaker'
-
-//
-// WORKFLOW: Run main nf-core/cladebreaker analysis pipeline
-//
-workflow NFCORE_CLADEBREAKER {
-    CLADEBREAKER ()
-}
+include { CLADEBREAKER       } from './workflows/cladebreaker'
+include { BUILD              } from './workflows/build'
 
 /*
 ========================================================================================
@@ -53,7 +31,8 @@ workflow NFCORE_CLADEBREAKER {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NFCORE_CLADEBREAKER ()
+    WorkflowMain.initialise(workflow, params, log)
+    CLADEBREAKER ()
 }
 
 /*

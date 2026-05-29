@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/cladebreaker/master/nextflow_schema.json",
-    "title": "nf-core/cladebreaker pipeline parameters",
-    "description": "nf-core implementation of the Planet Lab cladebreaker pipeline.",
+    "title": "cladebreaker pipeline parameters",
+    "description": "implementation of the Planet Lab cladebreaker pipeline.",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -59,15 +59,24 @@
                     "description": "Path to precompressed WhatsGNU database."
                 },
                 "o": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "description": "Specifies that precompressed WhatsGNU database is ortholog."
                 },
                 "b": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "description": "Specifies that precompressed WhatsGNU database is basic."
                 },
                 "topgenomes_count": {
-                    "type": "integer",
+                    "type": [
+                        "integer",
+                        "string"
+                    ],
                     "default": 3,
                     "description": "Number of topgenomes for WhatsGNU to find."
                 }
@@ -188,11 +197,48 @@
                     "help_text": "Use to set a value other than default for Shovill depth."
                 },
                 "shovill_gsize": {
-                    "type":"integer",
+                    "type": "integer",
                     "description": "Estimated genome size for Shovill.",
-                    "default":"",
-                    "hidden":true,
-                    "help_text":"Use to set estimated genome size for Shovill. No input sets autodetect (default),=."
+                    "default": "",
+                    "hidden": true,
+                    "help_text": "Use to set estimated genome size for Shovill. No input sets autodetect (default),=."
+                }
+            }
+        },
+        "build_options": {
+            "title": "cladebreaker build options",
+            "type": "object",
+            "fa_icon": "fas fa-database",
+            "description": "Options for the `cladebreaker build` workflow (entry: CLADEBREAKER_BUILD). Used to automatically download or construct a WhatsGNU database for a target species.",
+            "help_text": "These parameters are only relevant when running the database build workflow via `nextflow run main.nf -entry CLADEBREAKER_BUILD` or through the interactive `cladebreaker_build.py` script. They are not used by the main analysis pipeline.",
+            "properties": {
+                "taxid": {
+                    "type": "integer",
+                    "description": "NCBI TaxID of the target species for database construction.",
+                    "help_text": "Provide the NCBI Taxonomy ID for the species you want to build a WhatsGNU database for (e.g. 1280 for Staphylococcus aureus). The build workflow will query NCBI Assembly for all available genomes under this TaxID, download them, annotate with Prokka, and compress them into a WhatsGNU database.",
+                    "fa_icon": "fas fa-bacteria",
+                    "examples": [
+                        1280,
+                        562,
+                        573
+                    ]
+                },
+                "genome_count": {
+                    "type": "integer",
+                    "description": "Maximum number of reference genomes to include in the database build.",
+                    "help_text": "Limits the number of genomes downloaded from NCBI for the custom build. Genomes are selected in the order returned by NCBI Assembly. If not set, all available assemblies for the given TaxID are used.",
+                    "fa_icon": "fas fa-list-ol"
+                },
+                "db_mode": {
+                    "type": "string",
+                    "description": "WhatsGNU database mode to build: 'basic' or 'ortholog'.",
+                    "default": "basic",
+                    "enum": [
+                        "basic",
+                        "ortholog"
+                    ],
+                    "help_text": "Controls which compression mode WhatsGNU uses when building the database.\n\n- **basic**: Compresses all proteins across all genomes. Suitable for any species. Recommended default.\n- **ortholog**: Groups proteins by ortholog clusters before compression. Provides additional rarity scoring but requires a well-sampled reference set.\n\nThe resulting database mode must match the `--o` (ortholog) or `--b` (basic) flag used when running the main cladebreaker pipeline.",
+                    "fa_icon": "fas fa-sliders-h"
                 }
             }
         },
@@ -287,7 +333,10 @@
                     ]
                 },
                 "force": {
-                    "type": "boolean",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
                     "default": false,
                     "description": "Nextflow will overwrite existing output files.",
                     "fa_icon": "fas fa-recycle",
@@ -308,6 +357,9 @@
         },
         {
             "$ref": "#/definitions/max_job_request_options"
+        },
+        {
+            "$ref": "#/definitions/build_options"
         },
         {
             "$ref": "#/definitions/generic_options"
