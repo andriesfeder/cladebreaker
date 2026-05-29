@@ -1,6 +1,6 @@
 # Cladebreaker: Phylogenetic Analysis Pipeline
 
-Cladebreaker is a comprehensive pipeline for the phylogenetic analysis of bacterial genomes. It identifies closely related genomes using [WhatsGNU](https://github.com/ahmedmagds/WhatsGNU), creates pangenome alignments with Roary or PIRATE, and supports reference-based alignments via Snippy — enabling genomic comparisons and evolutionary studies for any bacterial species.
+Cladebreaker is a comprehensive pipeline for the phylogenetic analysis of bacterial genomes. It identifies closely related genomes using [WhatsGNU](https://github.com/ahmedmagds/WhatsGNU), creates pangenome alignments with [Panaroo](https://github.com/gtonkinhill/panaroo) (default), [PIRATE](https://github.com/SionBayliss/PIRATE), or [Roary](https://github.com/sanger-pathogens/Roary) (container only), and supports reference-based alignments via Snippy — enabling genomic comparisons and evolutionary studies for any bacterial species.
 
 ## Installation
 
@@ -149,6 +149,7 @@ cladebreaker \
 | `--topgenomes_count INT` | Number of top genomes to select per query (default: 3) |
 | `--ref PATH` | Path to a reference genome for reference-based alignment |
 | `--run_raxml` | Run RAxML-NG to generate a phylogenetic tree |
+| `--pangenome_tool STR` | Pan-genome tool: `panaroo` (default), `pirate`, or `roary` (container only) |
 | `--coverage INT` | Coverage threshold for genome filtering |
 | `--force` | Overwrite existing output files |
 | `-profile STR` | Nextflow execution profile (e.g. `conda`, `docker`, `singularity`) |
@@ -157,7 +158,7 @@ cladebreaker \
 
 ### Pangenome alignment (default)
 
-By default, Cladebreaker builds a pangenome alignment using Roary:
+By default, Cladebreaker builds a pangenome alignment using Panaroo. Use `--pangenome_tool pirate` to switch to PIRATE, or `--pangenome_tool roary` to use Roary (requires a container profile — Roary cannot be installed via conda due to a Perl dependency conflict):
 
 ```sh
 cladebreaker \
@@ -211,7 +212,9 @@ Cladebreaker produces the following results under `--outdir`:
 | `{sample}/prokka/` | Prokka genome annotations |
 | `{sample}/shovill/` | Shovill assemblies (if FASTQ input) |
 | `{sample}/fastqc/` | FastQC read quality reports |
-| `roary/` | Roary pangenome alignment and core genome FASTA |
+| `panaroo/` | Panaroo pangenome results and core gene alignment (default) |
+| `pirate/` | PIRATE pangenome results (when `--pangenome_tool pirate`) |
+| `roary/` | Roary pangenome results (when `--pangenome_tool roary`) |
 | `snippy/` | Snippy per-sample variant calls and core SNP alignment |
 | `raxmlng/` | RAxML-NG phylogenetic tree (if `--run_raxml`) |
 | `multiqc/` | MultiQC summary report |
@@ -233,8 +236,8 @@ If you use Cladebreaker in your research, please cite:
 > sequencing-based clade assignment of bacterial isolates.
 > https://github.com/andriesfeder/cladebreaker
 
-Please also cite the underlying tools: WhatsGNU, Nextflow, Prokka, Roary, Snippy,
-RAxML-NG, Shovill, FastQC, MultiQC, and ncbi-genome-download.
+Please also cite the underlying tools: WhatsGNU, Nextflow, Prokka, Panaroo, PIRATE,
+Roary, Snippy, RAxML-NG, Shovill, FastQC, MultiQC, and ncbi-genome-download.
 Run `cladebreaker citations` for the full reference list.
 
 ---

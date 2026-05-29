@@ -58,6 +58,15 @@ CITATIONS = [
         ),
     },
     {
+        "tool": "Panaroo",
+        "citation": (
+            "Tonkin-Hill G, MacAlasdair N, Gillies C, Weimann A, Rocha EPC, Bentley SD, "
+            "Parkhill J, Page AJ, Getz A, Wordsworth S, Coll F (2020). Producing polished "
+            "prokaryotic pangenomes with the Panaroo pipeline. Genome Biology 21:180. "
+            "https://doi.org/10.1186/s13059-020-02090-4"
+        ),
+    },
+    {
         "tool": "Roary",
         "citation": (
             "Page AJ, Cummins CA, Hunt M, Wong VK, Reuter S, Holden MTG, Fookes M, "
