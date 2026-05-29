@@ -10,7 +10,7 @@ build:
   noarch: generic
   number: 0
   run_exports:
-    - {{ name }}
+    - cladebreaker
 requirements:
   host:
     - python >=3.10
