@@ -12,8 +12,6 @@ build:
   run_exports:
     - cladebreaker
 requirements:
-  host:
-    - python >=3.10
   run:
     - python
     - biopython
