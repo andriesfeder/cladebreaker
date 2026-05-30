@@ -6,8 +6,6 @@
 
 **Cladebreaker** is a Nextflow pipeline for whole-genome sequencing (WGS)-based phylogenetic analysis of bacterial isolates. Starting from raw Illumina reads or assembled genomes, Cladebreaker identifies the most closely related publicly available genomes using [WhatsGNU](https://github.com/ahmedmagds/WhatsGNU), downloads those reference genomes, and builds a phylogenetic context — either through pangenome alignment ([Panaroo](https://github.com/gtonkinhill/panaroo), [PIRATE](https://github.com/SionBayliss/PIRATE), or [Roary](https://github.com/sanger-pathogens/Roary)) or reference-based SNP alignment ([Snippy](https://github.com/tseemann/snippy)) — with an optional maximum-likelihood tree via [RAxML-NG](https://github.com/amkozlov/raxml-ng).
 
-Cladebreaker was designed to be practical: it works on any bacterial species, runs on laptops and HPC clusters alike, and requires nothing beyond a mamba install to get started.
-
 ---
 
 ## Features
@@ -15,12 +13,12 @@ Cladebreaker was designed to be practical: it works on any bacterial species, ru
 - **Species-agnostic**: works for any bacterial species with NCBI assemblies available
 - **Flexible input**: accepts paired-end reads, single-end reads, pre-assembled genomes, or any combination
 - **WhatsGNU-powered genome selection**: identifies the closest relatives among thousands of public genomes using proteomic rarity scoring — no arbitrary species list required
-- **Three pangenome tools**: Panaroo (default), PIRATE, or Roary — choose the tool that fits your analysis
+- **Three pangenome tools**: Panaroo (default), PIRATE, or Roary
 - **Reference-based alignment**: use `--ref` to switch from pangenome mode to Snippy SNP alignment for any target reference
-- **Integrated de novo assembly**: Shovill assembles raw reads in-pipeline, so you never have to run an assembler separately
-- **Automated database management**: `cladebreaker build` downloads pre-built WhatsGNU databases for common species or constructs a custom database from NCBI for any taxon
+- **Integrated de novo assembly**: Shovill assembles raw reads in-pipeline
+- **Automated database management**: `cladebreaker build` downloads pre-built WhatsGNU databases for common species or constructs a custom database from NCBI
 - **Pre-built databases available**: ready-to-use databases for *S. aureus*, *S. epidermidis*, *K. pneumoniae*, *P. aeruginosa*, *E. coli*, *S. enterica*, *M. tuberculosis*, and *C. difficile*
-- **Reproducible**: built on [Nextflow](https://www.nextflow.io/) with full support for Conda, Docker, Singularity, Podman, and other container backends
+- **Reproducible**: built on [Nextflow](https://www.nextflow.io/) with full support for Conda, Docker, and Singularity
 - **MultiQC report**: a single HTML quality-control report covering read quality, assembly statistics, and software versions
 
 ---
@@ -46,9 +44,6 @@ cladebreaker \
   --o \
   -profile conda
 ```
-
-That's it. Cladebreaker handles assembly, annotation, closest-genome selection, genome download, alignment, and QC reporting automatically.
-
 ---
 
 ## Installation
