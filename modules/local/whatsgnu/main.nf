@@ -1,11 +1,11 @@
 process WHATSGNU_MAIN {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::whatsgnu=1.3" : null)
+    conda (params.enable_conda ? "bioconda::whatsgnu=1.5" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/whatsgnu:1.3--hdfd78af_0':
-        'quay.io/biocontainers/whatsgnu:1.3--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/whatsgnu:1.5--hdfd78af_0':
+        'quay.io/biocontainers/whatsgnu:1.5--hdfd78af_0' }"
 
     publishDir { "${params.outdir}/${meta.id}/WhatsGNU" }, mode: params.publish_dir_mode, overwrite: params.force
 
