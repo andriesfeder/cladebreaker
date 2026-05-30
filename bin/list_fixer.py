@@ -23,7 +23,7 @@ def clean_list(file_in, file_out):
         raw_num = raw_num.split("GCA")
         gca_num = raw_num[1]
         gca_num = gca_num.split("_"[0])
-        final_num = "GCA_"+gca_num[1]
+        final_num = "GCA_"+gca_num[1].split("\t")[0].strip()
         # if final_num in gca:
         #    continue
         #else:
