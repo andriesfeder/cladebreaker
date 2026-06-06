@@ -11,32 +11,36 @@ def parse_args(args=None):
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
     parser.add_argument("FILE_IN", help="Input topgenomes text file.")
-    parser.add_argument("FILE_OUT", help="Output file.")
+    parser.add_argument("FILE_OUT", help="Output file with accessions and hit counts (record).")
+    parser.add_argument("FILE_CLEAN", help="Output file with accessions only (for ncbi-genome-download).")
     return parser.parse_args(args)
 
-def clean_list(file_in, file_out):
+def clean_list(file_in, file_out, file_clean):
     gca = []
     file=open(file_in, "r")
     newFile=open(file_out,"w")
+    cleanFile=open(file_clean,"w")
     file.readline()
     for raw_num in file:
         raw_num = raw_num.split("GCA")
         gca_num = raw_num[1]
         gca_num = gca_num.split("_"[0])
-        final_num = "GCA_"+gca_num[1].split("\t")[0].strip()
+        final_num = "GCA_"+gca_num[1]
         # if final_num in gca:
         #    continue
         #else:
         if len(final_num) > 6:
             newFile.write(final_num+"\n")
+            cleanFile.write(final_num.split("\t")[0].strip()+"\n")
             gca.append(final_num)
 
+    cleanFile.close()
     newFile.close()
     file.close()
 
 def main(args=None):
     args = parse_args(args)
-    clean_list(args.FILE_IN, args.FILE_OUT)
+    clean_list(args.FILE_IN, args.FILE_OUT, args.FILE_CLEAN)
 
 if __name__ == "__main__":
     sys.exit(main())

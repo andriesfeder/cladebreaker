@@ -16,7 +16,8 @@ process WHATSGNU_MAIN {
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     tuple val(meta), path("WhatsGNU_Report/*_WhatsGNU_report.txt")  , emit: report
     tuple val(meta), path("WhatsGNU_Report/*_topgenomes.txt")       , emit: topgenomes
-    path("WhatsGNU_Report/${meta.id}_gca_list.txt"), emit: gca_list
+    path("WhatsGNU_Report/${meta.id}_gca_list.txt")      , emit: gca_list_record
+    path("WhatsGNU_Report/${meta.id}_gca_clean_list.txt"), emit: gca_list
     tuple val(meta), path("WhatsGNU_Report/*.log")                  , emit: log
     path "versions.yml"                                             , emit: versions
 
@@ -42,7 +43,7 @@ process WHATSGNU_MAIN {
         --force \\
         ${faa}
 
-    list_fixer.py WhatsGNU_Report/*_topgenomes.txt WhatsGNU_Report/${meta.id}_gca_list.txt
+    list_fixer.py WhatsGNU_Report/*_topgenomes.txt WhatsGNU_Report/${meta.id}_gca_list.txt WhatsGNU_Report/${meta.id}_gca_clean_list.txt
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         WhatsGNU: \$(echo \$(WhatsGNU_main.py --version 2>&1) | sed 's/^.*WhatsGNU //')
