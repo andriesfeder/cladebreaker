@@ -2,10 +2,10 @@ process FETCH_ACCESSIONS {
     tag "taxid:${taxid}"
     label 'process_low'
 
-    conda (params.enable_conda ? "bioconda::biopython=1.79" : null)
+    conda (params.enable_conda ? "conda-forge::biopython" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/biopython:1.79':
-        'quay.io/biocontainers/biopython:1.79' }"
+        'https://depot.galaxyproject.org/singularity/biopython:1.84--py312h9948be5_0':
+        'quay.io/biocontainers/biopython:1.84--py312h9948be5_0' }"
 
     input:
     val taxid
@@ -20,6 +20,7 @@ process FETCH_ACCESSIONS {
     """
     #!/usr/bin/env python3
     from Bio import Entrez
+    import Bio
     import sys
 
     Entrez.email = "cladebreaker@pipeline.org"
@@ -67,9 +68,7 @@ process FETCH_ACCESSIONS {
 
     print(f"Wrote {len(accessions)} accessions to accessions.txt")
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        biopython: \$(python -c "import Bio; print(Bio.__version__)")
-    END_VERSIONS
+    with open("versions.yml", "w") as fh:
+        fh.write('"${task.process}":\\n    biopython: ' + Bio.__version__ + '\\n')
     """
 }

@@ -124,6 +124,10 @@ Pre-built databases are available for the following species and can be downloade
 
 For any species not listed, `cladebreaker build` will automatically download reference genomes from NCBI Assembly and construct a custom database.
 
+### Annotation consistency
+
+> **Important**: The annotation tool used to build the WhatsGNU database must match the tool used to annotate query genomes in the main pipeline. Using Prokka to build the database and Bakta to annotate queries (or vice versa) will produce inconsistent protein identifiers and rarity scores, leading to unreliable WhatsGNU results. Set `--annotator` to the same value in both `cladebreaker build` and the main `cladebreaker` run.
+
 ### Database modes
 
 WhatsGNU databases come in two modes:
@@ -140,6 +144,8 @@ The mode used to build the database must match the `--o` (ortholog) or `--b` (ba
 | `--taxid INT` | NCBI TaxID of the target species (required) |
 | `--ortholog` | Download/build an ortholog-mode database (default: basic) |
 | `--genome_count INT` | Maximum genomes for a custom build (default: all available in NCBI) |
+| `--annotator STR` | Annotation tool for custom builds: `prokka` (default) or `bakta` |
+| `--bakta_db PATH` | Path to a local Bakta database directory (required when `--annotator bakta`) |
 | `--outdir PATH` | Where to save the database (default: `./cladebreaker_databases`) |
 | `-profile STR` | Nextflow profile for a custom build (e.g. `conda`, `docker`) |
 | `-c PATH` | Additional Nextflow config file for a custom build |
@@ -167,7 +173,7 @@ When no pre-built database is available (or you choose to build your own), the `
 
 1. Fetches genome accession lists from NCBI Assembly for the given TaxID
 2. Downloads all genome FASTA files using ncbi-genome-download
-3. Annotates each genome with Prokka to generate protein FAA files
+3. Annotates each genome with Prokka (default) or Bakta (`--annotator bakta`) to generate protein FAA files
 4. Compresses all FAA files into a WhatsGNU database using the specified mode
 
 ---
@@ -258,12 +264,16 @@ cladebreaker \
 | `--shovill_depth INT` | `150` | Target read depth for Shovill subsampling |
 | `--shovill_gsize INT` | autodetect | Estimated genome size passed to Shovill |
 
-### Annotation options (Prokka)
+### Annotation options
 
 | Option | Description |
 |---|---|
+| `--annotator STR` | Annotation tool: `prokka` (default) or `bakta` |
+| `--bakta_db PATH` | Path to a local Bakta database directory (required when `--annotator bakta`) |
 | `--proteins PATH` | Genbank file of trusted protein sequences for Prokka annotation |
 | `--prodigal_tf PATH` | Pretrained Prodigal model file for gene prediction |
+
+> **Important**: `--annotator` must match the tool used when building your WhatsGNU database. Mixing annotators between the database build and the analysis run produces inconsistent protein identifiers and unreliable WhatsGNU rarity scores.
 
 ### Resource limit options
 
@@ -377,13 +387,13 @@ Assembly statistics
     └─ Assembly metrics    → assembly-scan
 
 Genome annotation
-    └─ Gene prediction     → Prokka
+    └─ Gene prediction     → Prokka (default) / Bakta (--annotator bakta)
 
 Closest-genome identification
     └─ Proteomic rarity    → WhatsGNU
 
 Reference genome acquisition
-    └─ Download from NCBI  → ncbi-genome-download + Prokka
+    └─ Download from NCBI  → ncbi-genome-download + Prokka / Bakta
 
 Phylogenetic alignment (choose one mode)
     ├─ Pangenome mode      → Panaroo / PIRATE / Roary
@@ -404,6 +414,7 @@ Quality reporting
 | [Shovill](https://github.com/tseemann/shovill) | De novo assembly of Illumina short reads using SPAdes with read depth normalisation |
 | [assembly-scan](https://github.com/rpetit3/assembly-scan) | Rapid summary statistics for genome assemblies (N50, contig count, total length) |
 | [Prokka](https://github.com/tseemann/prokka) | Rapid prokaryotic genome annotation; generates GFF and FAA files consumed by downstream tools |
+| [Bakta](https://github.com/oschwengers/bakta) | High-accuracy prokaryotic genome annotation backed by a curated database; optional alternative to Prokka for `cladebreaker build` via `--annotator bakta` |
 | [WhatsGNU](https://github.com/ahmedmagds/WhatsGNU) | Identifies the most closely related public genomes by scoring proteomic rarity across a compressed reference database |
 | [ncbi-genome-download](https://github.com/kblin/ncbi-genome-download) | Downloads selected reference genome assemblies from NCBI FTP |
 | [Panaroo](https://github.com/gtonkinhill/panaroo) | Graph-based pangenome pipeline; produces a core-gene multiple sequence alignment |
@@ -604,6 +615,7 @@ For a full list of per-tool citations, run `cladebreaker citations`. The underly
 | nf-core | Ewels *et al.* (2020) *Nat Biotechnol* [doi:10.1038/s41587-020-0439-x](https://doi.org/10.1038/s41587-020-0439-x) |
 | WhatsGNU | Moustafa & Planet (2020) *Genome Biol* [doi:10.1186/s13059-020-01965-w](https://doi.org/10.1186/s13059-020-01965-w) |
 | Prokka | Seemann (2014) *Bioinformatics* [doi:10.1093/bioinformatics/btu153](https://doi.org/10.1093/bioinformatics/btu153) |
+| Bakta | Schwengers *et al.* (2021) *Microb Genom* [doi:10.1099/mgen.0.000685](https://doi.org/10.1099/mgen.0.000685) |
 | Panaroo | Tonkin-Hill *et al.* (2020) *Genome Biol* [doi:10.1186/s13059-020-02090-4](https://doi.org/10.1186/s13059-020-02090-4) |
 | PIRATE | Bayliss *et al.* (2019) *Gigascience* [doi:10.1093/gigascience/giz119](https://doi.org/10.1093/gigascience/giz119) |
 | Roary | Page *et al.* (2015) *Bioinformatics* [doi:10.1093/bioinformatics/btv421](https://doi.org/10.1093/bioinformatics/btv421) |

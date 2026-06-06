@@ -18,6 +18,7 @@ include { MULTIQC                     } from '../modules/nf-core/modules/multiqc
 include { SHOVILL                     } from '../modules/nf-core/modules/shovill/main'
 include { ASSEMBLYSCAN                } from '../modules/nf-core/modules/assemblyscan/main'
 include { PROKKA                      } from '../modules/nf-core/modules/prokka/main'
+include { BAKTA                       } from '../modules/local/bakta/main'
 include { PANAROO                     } from '../modules/nf-core/modules/panaroo/main'
 include { PIRATE                      } from '../modules/nf-core/modules/pirate/main'
 include { ROARY                       } from '../modules/nf-core/modules/roary/main'
@@ -57,6 +58,9 @@ workflow CLADEBREAKER {
 
     // Check mandatory parameters
     if (!params.input) { exit 1, 'Input samplesheet not specified!' }
+    if (params.annotator == 'bakta' && !params.bakta_db) {
+        exit 1, "ERROR: --bakta_db <path> is required when --annotator bakta is set."
+    }
     def ch_input = file(params.input)
 
     // Config files
@@ -94,21 +98,36 @@ workflow CLADEBREAKER {
     )
 
     //
-    // MODULE: Run Prokka
+    // MODULE: Annotate assemblies (Prokka or Bakta)
     //
-    prokka_input = Channel.empty()
-    prokka_input = prokka_input.mix(INPUT_CHECK.out.assemblies)
-    prokka_input = prokka_input.mix(SHOVILL.out.contigs)
+    annotation_input = Channel.empty()
+    annotation_input = annotation_input.mix(INPUT_CHECK.out.assemblies)
+    annotation_input = annotation_input.mix(SHOVILL.out.contigs)
 
-    PROKKA (
-        prokka_input.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
-    )
+    if ( params.annotator == 'bakta' ) {
+        BAKTA (
+            annotation_input,
+            file(params.bakta_db)
+        )
+        ch_annotation_faa = BAKTA.out.faa
+        ch_annotation_gff = BAKTA.out.gff
+        ch_versions = ch_versions.mix(BAKTA.out.versions.first())
+    } else {
+        PROKKA (
+            annotation_input
+                .combine(Channel.fromPath( params.proteins ))
+                .combine(Channel.fromPath( params.prodigal_tf ))
+        )
+        ch_annotation_faa = PROKKA.out.faa
+        ch_annotation_gff = PROKKA.out.gff
+        ch_versions = ch_versions.mix(PROKKA.out.versions.first())
+    }
 
     //
     // MODULE: Run WhatsGNU
     //
     WHATSGNU_MAIN (
-        PROKKA.out.faa.combine(Channel.fromPath( params.db ))
+        ch_annotation_faa.combine(Channel.fromPath( params.db ))
     )
 
     //
@@ -123,8 +142,8 @@ workflow CLADEBREAKER {
     //
     if ( params.ref == null) {
         // Collect GFF files from user assemblies and downloaded reference genomes
-        all_gff = PROKKA.out.gff.map { meta, gff -> gff }
-        all_gff = all_gff.mix(GATHER_GENOMES.out.prokka_gff.map { meta, gff -> gff })
+        all_gff = ch_annotation_gff.map { meta, gff -> gff }
+        all_gff = all_gff.mix(GATHER_GENOMES.out.annotation_gff.map { meta, gff -> gff })
         def pg_meta = [id: 'all_samples', single_end: false, assembly: false]
         pangenome_input = all_gff.collect().map { gffs -> [pg_meta, gffs] }
 
@@ -171,7 +190,6 @@ workflow CLADEBREAKER {
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
     ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
     ch_versions = ch_versions.mix(ASSEMBLYSCAN.out.versions.first())
-    ch_versions = ch_versions.mix(PROKKA.out.versions.first())
     ch_versions = ch_versions.mix(WHATSGNU_MAIN.out.versions.first())
     ch_versions = ch_versions.mix(GATHER_GENOMES.out.versions.first())
     if ( params.ref != null) {

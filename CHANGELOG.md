@@ -3,6 +3,21 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### `Added`
+
+- **`modules/local/bakta/main.nf`**: New `BAKTA` process for genome annotation using [Bakta](https://github.com/oschwengers/bakta) as an alternative to Prokka in both the main pipeline and `cladebreaker build` (`bioconda::bakta`, container `quay.io/biocontainers/bakta:1.9.4`)
+- **`--annotator` parameter**: Selects the annotation tool — `prokka` (default) or `bakta` — for both user assemblies and downloaded reference genomes in the main pipeline, and for reference genomes in the `cladebreaker build` workflow
+- **`--bakta_db PATH` parameter**: Path to a local Bakta database directory; required when `--annotator bakta` is set. Database can be downloaded with `bakta_db download`
+
+### `Fixed`
+
+- **`main.nf`**: Replaced `-entry CLADEBREAKER_BUILD` workflow selection with a `params.workflow` branch inside the entry `workflow {}` block — the `-entry` option is not supported by the Nextflow 26.x strict parser
+- **`bin/cladebreaker-build.py`**: Updated `launch_build_workflow()` to pass `--workflow BUILD` instead of `-entry CLADEBREAKER_BUILD` to match the new entry-point pattern
+- **`modules/local/build/fetch_accessions.nf`**: Replaced bash `cat <<-END_VERSIONS` heredoc with Python `open()` to write `versions.yml` — the heredoc caused a `SyntaxError` because the entire script block is executed as Python (shebang `#!/usr/bin/env python3`)
+- **`modules/local/build/fetch_accessions.nf`**: Updated conda directive from `bioconda::biopython=1.79` to `conda-forge::biopython` — biopython is distributed via `conda-forge`, not `bioconda`, and version `1.79` was not resolvable
+
 ## v0.3.0 - 2026-05-29
 
 Initial release of cladebreaker, created with the [nf-core](https://nf-co.re/) template.

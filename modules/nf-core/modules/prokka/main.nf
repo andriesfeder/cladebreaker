@@ -3,11 +3,11 @@ process PROKKA {
     label 'process_low'
     label 'error_retry'
 
-    conda (params.enable_conda ? "bioconda::prokka=1.14.6" : null)
+    conda (params.enable_conda ? "bioconda::prokka=1.15.6" : null)
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/prokka:1.14.6--pl526_0' :
-        'quay.io/biocontainers/prokka:1.14.6--pl526_0' }"
+        'https://depot.galaxyproject.org/singularity/prokka:1.15.6--pl526_0' :
+        'quay.io/biocontainers/prokka:1.15.6--pl526_0' }"
 
 
     publishDir { "${params.outdir}/${meta.id}/" }, mode: params.publish_dir_mode, overwrite: params.force
@@ -39,8 +39,6 @@ process PROKKA {
     def args = task.ext.args   ?: ''
     prefix   = task.ext.prefix ?: "${meta.id}"
     prokka_prodigal = ""
-    def src = "annotation/${meta.id}.gff"
-    def dest = "${workflow.workDir}/tmp/gff/${meta.id}.gff"
     if (prodigal_tf.getName() != 'EMPTY_TF' && !params.skip_prodigal_tf) {
         prokka_prodigal = "--prodigaltf ${prodigal_tf}"
     }
@@ -74,8 +72,6 @@ process PROKKA {
         $prokka_proteins \\
         $prokka_prodigal \\
         ${fasta}
-
-    cp $src $dest
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

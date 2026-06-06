@@ -239,6 +239,23 @@
                     ],
                     "help_text": "Controls which compression mode WhatsGNU uses when building the database.\n\n- **basic**: Compresses all proteins across all genomes. Suitable for any species. Recommended default.\n- **ortholog**: Groups proteins by ortholog clusters before compression. Provides additional rarity scoring but requires a well-sampled reference set.\n\nThe resulting database mode must match the `--o` (ortholog) or `--b` (basic) flag used when running the main cladebreaker pipeline.",
                     "fa_icon": "fas fa-sliders-h"
+                },
+                "annotator": {
+                    "type": "string",
+                    "description": "Genome annotation tool to use: 'prokka' (default) or 'bakta'.",
+                    "default": "prokka",
+                    "enum": [
+                        "prokka",
+                        "bakta"
+                    ],
+                    "help_text": "Selects the annotation tool used to predict protein-coding genes from downloaded reference genomes before building the WhatsGNU database.\n\n- **prokka**: Fast, widely-used prokaryotic annotator. No database required.\n- **bakta**: More accurate annotation using a curated database. Requires `--bakta_db` to point to a local Bakta database (download with `bakta_db download`).",
+                    "fa_icon": "fas fa-pen-nib"
+                },
+                "bakta_db": {
+                    "type": "string",
+                    "description": "Path to a local Bakta database directory. Required when --annotator bakta is set.",
+                    "help_text": "Path to a pre-downloaded Bakta database. Download with:\n\n```\nbakta_db download --output /path/to/db\n```\n\nOnly used when `--annotator bakta` is specified.",
+                    "fa_icon": "fas fa-database"
                 }
             }
         },

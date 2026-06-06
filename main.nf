@@ -31,8 +31,12 @@ include { BUILD              } from './workflows/build'
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    WorkflowMain.initialise(workflow, params, log)
-    CLADEBREAKER ()
+    if (params.workflow == 'BUILD') {
+        BUILD ()
+    } else {
+        WorkflowMain.initialise(workflow, params, log)
+        CLADEBREAKER ()
+    }
 }
 
 /*

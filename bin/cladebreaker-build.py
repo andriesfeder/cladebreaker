@@ -122,7 +122,7 @@ def launch_build_workflow(taxid, genome_count, mode, outdir, extra_args):
     """Launch the Nextflow CLADEBREAKER_BUILD workflow for custom database building."""
     cmd = [
         "nextflow", "run", str(PROJECT_DIR / "main.nf"),
-        "-entry", "CLADEBREAKER_BUILD",
+        "--workflow", "BUILD",
         "--taxid", str(taxid),
         "--genome_count", str(genome_count),
         "--db_mode", mode,

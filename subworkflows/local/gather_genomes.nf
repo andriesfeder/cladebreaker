@@ -3,6 +3,7 @@
 //
 
 include { PROKKA             } from '../../modules/nf-core/modules/prokka/main'
+include { BAKTA              } from '../../modules/local/bakta/main'
 include { NCBIGENOMEDOWNLOAD } from '../../modules/nf-core/modules/ncbigenomedownload/main'
 
 workflow GATHER_GENOMES {
@@ -24,24 +25,33 @@ workflow GATHER_GENOMES {
         gca
     )
     ch_versions = ch_versions.mix(NCBIGENOMEDOWNLOAD.out.versions.first())
-    prokka_gff = Channel.empty()
+    annotation_gff = Channel.empty()
     if( params.ref == null ){
-        prokka_ncbi =  Channel.empty()
-        prokka_ncbi = prokka_ncbi.mix(NCBIGENOMEDOWNLOAD.out.fna)
-        prokka_ncbi = prokka_ncbi.transpose()
-        prokka_ncbi = prokka_ncbi.combine(Channel.fromPath( params.proteins )).combine(Channel.fromPath( params.prodigal_tf ))
+        ncbi_fna = NCBIGENOMEDOWNLOAD.out.fna.transpose()
 
-        PROKKA (
-            prokka_ncbi
-        )
-        ch_versions = ch_versions.mix(PROKKA.out.versions.first())
-        prokka_gff = prokka_gff.mix(PROKKA.out.gff)
+        if ( params.annotator == 'bakta' ) {
+            BAKTA (
+                ncbi_fna,
+                file(params.bakta_db)
+            )
+            ch_versions    = ch_versions.mix(BAKTA.out.versions.first())
+            annotation_gff = annotation_gff.mix(BAKTA.out.gff)
+        } else {
+            prokka_ncbi = ncbi_fna
+                .combine(Channel.fromPath( params.proteins ))
+                .combine(Channel.fromPath( params.prodigal_tf ))
+            PROKKA (
+                prokka_ncbi
+            )
+            ch_versions    = ch_versions.mix(PROKKA.out.versions.first())
+            annotation_gff = annotation_gff.mix(PROKKA.out.gff)
+        }
     }
 
     emit:
-    ncbi = NCBIGENOMEDOWNLOAD.out.fna
-    prokka_gff          // channel: [ val(meta), [ assemblies] ]
-    versions = ch_versions             // channel: [ versions.yml ]
+    ncbi           = NCBIGENOMEDOWNLOAD.out.fna
+    annotation_gff                      // channel: [ val(meta), path(gff) ]
+    versions       = ch_versions        // channel: [ versions.yml ]
 }
 
 def create_gca_channels( String gca ) {

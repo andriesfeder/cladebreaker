@@ -1,12 +1,12 @@
 process DOWNLOAD_GENOMES {
     tag "taxid:${taxid}"
     label 'process_low'
-    maxRetries 3
+    maxRetries 5
 
-    conda (params.enable_conda ? "bioconda::ncbi-genome-download=0.3.0" : null)
+    conda (params.enable_conda ? "bioconda::ncbi-genome-download=0.3.3" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ncbi-genome-download:0.3.0--pyh864c0ab_1':
-        'quay.io/biocontainers/ncbi-genome-download:0.3.0--pyh864c0ab_1' }"
+        'https://depot.galaxyproject.org/singularity/ncbi-genome-download:0.3.3--pyh864c0ab_1':
+        'quay.io/biocontainers/ncbi-genome-download:0.3.3--pyh864c0ab_1' }"
 
     input:
     path  accessions
