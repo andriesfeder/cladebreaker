@@ -68,10 +68,15 @@ workflow BUILD {
     )
 
     //
-    // Download all accessions in one ncbi-genome-download call
+    // Split the accession list into chunks and download them as parallel jobs.
+    // A single serial download of all accessions cannot fit within walltime for
+    // large taxa (e.g. taxid 1280 has ~100k assemblies), so we fan out instead.
     //
+    ch_accession_chunks = FETCH_ACCESSIONS.out.accessions
+        .splitText( by: params.download_chunk_size ?: 2000, file: true )
+
     DOWNLOAD_GENOMES(
-        FETCH_ACCESSIONS.out.accessions,
+        ch_accession_chunks,
         params.taxid
     )
 
