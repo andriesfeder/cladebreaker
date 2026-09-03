@@ -60,7 +60,12 @@ process PROKKA {
     // def prodigal_opt = prodigal_tf ? "--prodigaltf ${prodigal_tf[0]}" : ""
     //${params.outdir}/${meta.id}/$fasta
     """
-    
+    # Prokka (barrnap/blastp/tbl2asn) writes scratch files to TMPDIR, which
+    # defaults to the small, shared node-local /tmp and fills up under many
+    # concurrent jobs ("No space left on device"). Redirect it into the task
+    # work dir on the large scratch filesystem instead.
+    export TMPDIR="\$PWD/tmp"
+    mkdir -p "\$TMPDIR"
 
     prokka \\
         $args \\
