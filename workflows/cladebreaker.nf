@@ -25,6 +25,9 @@ include { ROARY                       } from '../modules/nf-core/modules/roary/m
 include { RAXMLNG                     } from '../modules/nf-core/modules/raxmlng/main'
 include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigenomedownload/main'
 
+include { GSI                         } from '../modules/local/gsi/main'
+include { GSI_GROUPS                  } from '../modules/local/gsi/groups'
+
 include { WHATSGNU_MAIN               } from '../modules/local/whatsgnu/main'
 include { WHATSGNU_GETGENOMES         } from '../modules/local/whatsgnu/getgenomes'
 include { QC_READS                    } from '../modules/local/cladebreaker/qc_reads'
@@ -60,6 +63,20 @@ workflow CLADEBREAKER {
     if (!params.input) { exit 1, 'Input samplesheet not specified!' }
     if (params.annotator == 'bakta' && !params.bakta_db) {
         exit 1, "ERROR: --bakta_db <path> is required when --annotator bakta is set."
+    }
+    if (params.run_gsi) {
+        if (!params.run_raxml) {
+            exit 1, "ERROR: --run_gsi requires --run_raxml; without it the pipeline builds no tree to analyze."
+        }
+        if (!(params.gsi_root in ['as-is', 'midpoint', 'outgroup'])) {
+            exit 1, "ERROR: --gsi_root must be one of 'as-is', 'midpoint' or 'outgroup' (got '${params.gsi_root}')."
+        }
+        if (params.gsi_root == 'outgroup' && !params.gsi_outgroup) {
+            exit 1, "ERROR: --gsi_root outgroup requires --gsi_outgroup <tip[,tip...]>."
+        }
+        if (params.gsi_root == 'as-is') {
+            log.warn "--run_gsi is using --gsi_root as-is, but RAxML-NG trees are unrooted and the gsi is undefined on an unrooted tree. Use --gsi_root midpoint or --gsi_root outgroup."
+        }
     }
     def ch_input = file(params.input)
 
@@ -186,6 +203,31 @@ workflow CLADEBREAKER {
         }
     }
 
+    //
+    // MODULE: Genealogical sorting index of the input isolates against the
+    // reference genomes WhatsGNU selected, on the tree just built
+    //
+    if ( params.run_gsi ) {
+        ch_query_ids = annotation_input
+            .map { meta, assembly -> "${meta.id}\n" }
+            .collectFile(name: 'gsi_query_ids.txt', sort: true)
+
+        ch_reference_ids = GATHER_GENOMES.out.ncbi
+            .map { meta, fna -> "${meta.id}\n" }
+            .collectFile(name: 'gsi_reference_ids.txt', sort: true)
+
+        GSI_GROUPS (
+            RAXMLNG.out.phylogeny,
+            ch_query_ids,
+            ch_reference_ids
+        )
+        GSI (
+            RAXMLNG.out.phylogeny,
+            GSI_GROUPS.out.groups
+        )
+        ch_versions = ch_versions.mix(GSI.out.versions)
+    }
+
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
     ch_versions = ch_versions.mix(SHOVILL.out.versions.first())
@@ -215,6 +257,9 @@ workflow CLADEBREAKER {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    if ( params.run_gsi ) {
+        ch_multiqc_files = ch_multiqc_files.mix(GSI.out.mqc.collect().ifEmpty([]))
+    }
 
     MULTIQC (
         ch_multiqc_files.collect()

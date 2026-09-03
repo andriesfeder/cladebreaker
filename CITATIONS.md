@@ -36,6 +36,12 @@
 * [RAxML-NG](https://pubmed.ncbi.nlm.nih.gov/31070718/)
     > Kozlov AM, Darriba D, Flouri T, Morel B, Stamatakis A. RAxML-NG: a fast, scalable and user-friendly tool for maximum likelihood phylogenetic inference. Bioinformatics. 2019 Nov 1;35(21):4453-4455. doi: 10.1093/bioinformatics/btz305. PubMed PMID: 31070718.
 
+* [Genealogical sorting index](https://pubmed.ncbi.nlm.nih.gov/18564379/)
+    > Cummings MP, Neel MC, Shaw KL. A genealogical approach to quantifying lineage divergence. Evolution. 2008 Sep;62(9):2411-22. doi: 10.1111/j.1558-5646.2008.00442.x. Epub 2008 Jun 16. PubMed PMID: 18564379.
+
+* [DendroPy](https://pubmed.ncbi.nlm.nih.gov/20421198/)
+    > Sukumaran J, Holder MT. DendroPy: a Python library for phylogenetic computing. Bioinformatics. 2010 Jun 15;26(12):1569-71. doi: 10.1093/bioinformatics/btq228. PubMed PMID: 20421198.
+
 * [assembly-scan](https://github.com/rpetit3/assembly-scan)
     > Petit RA III. assembly-scan: generate basic stats for an assembly. https://github.com/rpetit3/assembly-scan
 

@@ -18,6 +18,7 @@
 - **Integrated de novo assembly**: Shovill assembles raw reads in-pipeline
 - **Automated database management**: `cladebreaker build` downloads pre-built WhatsGNU databases for common species or constructs a custom database from NCBI
 - **Pre-built databases available**: ready-to-use databases for *S. aureus*, *S. epidermidis*, *K. pneumoniae*, *P. aeruginosa*, *E. coli*, *S. enterica*, *M. tuberculosis*, and *C. difficile*
+- **Quantified lineage divergence**: the genealogical sorting index (gsi) scores how far your isolates have sorted towards exclusive ancestry relative to the public genomes, with a permutation p-value — run it on the pipeline's own tree with `--run_gsi`, or on any rooted tree with `cladebreaker analyze`
 - **Reproducible**: built on [Nextflow](https://www.nextflow.io/) with full support for Conda, Docker, and Singularity
 - **MultiQC report**: a single HTML quality-control report covering read quality, assembly statistics, and software versions
 
@@ -275,6 +276,23 @@ cladebreaker \
 
 > **Important**: `--annotator` must match the tool used when building your WhatsGNU database. Mixing annotators between the database build and the analysis run produces inconsistent protein identifiers and unreliable WhatsGNU rarity scores.
 
+### Genealogical sorting index options
+
+| Option | Default | Description |
+|---|---|---|
+| `--run_gsi` | — | Run the gsi on the tree the pipeline builds (requires `--run_raxml`) |
+| `--gsi_root STR` | `as-is` | How to root the tree: `as-is`, `midpoint`, or `outgroup` |
+| `--gsi_outgroup STR` | — | Comma-separated tip labels to root on (required for `--gsi_root outgroup`) |
+| `--gsi_permutations INT` | `9999` | Permutations for the p-value; `0` skips the significance test |
+| `--gsi_seed INT` | `42` | Random seed, so a run reproduces exactly |
+| `--gsi_groups_to_test STR` | all | Comma-separated subset of group names to report |
+| `--gsi_query_label STR` | `query` | Group name given to your input isolates |
+| `--gsi_reference_label STR` | `reference` | Group name given to the downloaded reference genomes |
+
+> **Important**: RAxML-NG produces an **unrooted** tree, and the gsi is undefined on one. A mis-rooted tree still yields plausible-looking values, so pass `--gsi_root midpoint` or `--gsi_root outgroup` rather than relying on the `as-is` default.
+
+See [Genealogical Sorting Index](#genealogical-sorting-index) for what the statistic means.
+
 ### Resource limit options
 
 | Option | Default | Description |
@@ -344,6 +362,77 @@ cladebreaker \
   --run_raxml \
   -profile conda
 ```
+
+---
+
+## Genealogical Sorting Index
+
+Monophyly is a yes/no answer, which is a poor fit for closely related isolates that are still sorting. The **genealogical sorting index** (gsi) of [Cummings, Neel & Shaw (2008)](https://doi.org/10.1111/j.1558-5646.2008.00442.x) instead puts a labeled group on a continuum from **0** (ancestry fully mixed with the other groups) to **1** (monophyletic), and attaches a p-value.
+
+For a group on a rooted tree it compares the number of nodes actually needed to unite the group against the number a monophyletic group would need:
+
+```
+gs  = n / Σ (d_u − 2)      over the nodes uniting the group; n = group size − 1
+gsi = (gs − min(gs)) / (1 − min(gs))
+```
+
+where `d` is a node's degree. `min(gs)` uses every internal node in the tree, which is what makes values comparable between groups, trees, and studies. Polytomies need no special handling. Significance comes from permuting the group labels across the tips while holding the topology fixed.
+
+### On the pipeline's own tree
+
+Add `--run_gsi` to a normal run. Your input isolates become one group and the reference genomes WhatsGNU selected become another, so the statistic answers "how distinct are my isolates from their closest public relatives?"
+
+```bash
+nextflow run main.nf \
+  --input samplesheet.csv \
+  --db /path/to/database.pickle --o \
+  --run_raxml \
+  --run_gsi --gsi_root midpoint \
+  -profile conda,local
+```
+
+### On any rooted tree (`cladebreaker analyze`)
+
+The `ANALYZE` workflow takes a tree you already have, from this pipeline or anywhere else:
+
+```bash
+nextflow run main.nf --workflow ANALYZE \
+  --tree tree.nwk \
+  --groups groups.tsv \
+  --gsi_root midpoint \
+  --outdir results \
+  -profile conda
+```
+
+The groups file is two columns, tip label and group name (TSV or CSV, header optional):
+
+```
+tip_label	group
+SAMPLE_1	outbreak
+SAMPLE_2	outbreak
+GCA_000012345.1	reference
+GCA_000067890.1	reference
+```
+
+Any number of groups is allowed, so this is also the way to score several isolate clusters separately rather than lumping them together. Tips missing from the file are an error unless `--gsi_ignore_unlabeled` is set; unlabeled tips still shape the topology but join no group.
+
+### Accounting for phylogenetic uncertainty
+
+Pass a file holding several trees — RAxML-NG bootstrap replicates (`.raxml.bootstraps`, published in `raxmlng/` when RAxML is run with `--bs-trees`) or a Bayesian posterior sample — and the ensemble statistic `gsi_T` is reported instead, averaging over topologies weighted by their frequency. A per-tree breakdown is written alongside it.
+
+### Reading the output
+
+`gsi/cladebreaker.gsi.tsv` has one row per group:
+
+| Column | Meaning |
+|---|---|
+| `n_tips` | Tips belonging to the group |
+| `gs` | Raw statistic before normalisation (single trees only) |
+| `min_gs` | Smallest attainable `gs` for a group this size on this tree |
+| `gsi` | Normalised index, 0 to 1 — or `gsi_T` for an ensemble |
+| `p_value` | Permutation p-value; the observed labeling counts as one replicate |
+
+A high gsi with a small p-value means the group has largely sorted into its own ancestry. A low gsi means its members are still interleaved with the other groups on the tree. Values of `NA` mark groups where the statistic is undefined, such as a group of a single tip.
 
 ---
 
@@ -422,6 +511,7 @@ Quality reporting
 | [Roary](https://github.com/sanger-pathogens/Roary) | Classic rapid pangenome tool; produces a core-gene alignment (container only) |
 | [Snippy](https://github.com/tseemann/snippy) | Reference-based SNP/indel calling from reads or assemblies; Snippy-core merges per-sample VCFs into a core SNP alignment |
 | [RAxML-NG](https://github.com/amkozlov/raxml-ng) | Maximum-likelihood phylogenetic inference from core-gene or core-SNP alignments |
+| [DendroPy](https://dendropy.org/) | Phylogenetic tree parsing and rooting behind the genealogical sorting index |
 | [MultiQC](https://multiqc.info/) | Aggregates QC outputs from FastQC and other tools into a single HTML report |
 
 ---
@@ -459,7 +549,13 @@ All results are written under `--outdir`. The structure varies slightly dependin
 
 | Directory | Contents |
 |---|---|
-| `raxmlng/` | Best-scoring ML tree (`.raxml.bestTree`), bootstrap support trees, and log |
+| `raxmlng/` | Best-scoring ML tree (`.raxml.bestTree`), bootstrap support trees (`.raxml.support`, `.raxml.bootstraps`), and log |
+
+### Genealogical sorting index output (optional)
+
+| Directory | Contents |
+|---|---|
+| `gsi/` | `cladebreaker.gsi.tsv` (per-group gsi and p-value), `.gsi.json` (same plus run settings), `.gsi_mqc.tsv` (MultiQC table), `.gsi_per_tree.tsv` (per-topology values, ensembles only), and `gsi_groups.tsv` (the group assignments used, when generated by `--run_gsi`) |
 
 ### Pipeline-wide outputs
 

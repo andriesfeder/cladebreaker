@@ -6,5 +6,4 @@ testing/
 testing*
 *.pyc
 db-light/
-tests/
 data/conda/

@@ -358,6 +358,99 @@
                     "description": "Nextflow will overwrite existing output files.",
                     "fa_icon": "fas fa-recycle",
                     "hidden": true
+                },
+                "workflow": {
+                    "type": "string",
+                    "description": "Which workflow to run: unset for the main pipeline, or 'BUILD' / 'ANALYZE'.",
+                    "enum": [
+                        "BUILD",
+                        "ANALYZE"
+                    ],
+                    "help_text": "Selects the pipeline entry point. Leave unset to run the main cladebreaker analysis. `BUILD` constructs a WhatsGNU database from NCBI; `ANALYZE` runs statistics on an existing tree.",
+                    "fa_icon": "fas fa-code-branch"
+                }
+            }
+        },
+        "analyze_options": {
+            "title": "cladebreaker analyze options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Options for the `cladebreaker analyze` workflow (--workflow ANALYZE) and for running the genealogical sorting index on the tree built by the main pipeline.",
+            "help_text": "The genealogical sorting index (gsi) of Cummings, Neel & Shaw (2008) quantifies how far each labeled group on a rooted tree has sorted towards exclusive ancestry, from 0 (ancestry fully mixed with the other groups) to 1 (monophyletic). Significance comes from permuting the group labels across the tips.\n\nRun it standalone on any rooted tree with `--workflow ANALYZE --tree <tree.nwk> --groups <groups.tsv>`, or add `--run_gsi` to a normal pipeline run to score your isolates against the reference genomes WhatsGNU selected.",
+            "properties": {
+                "tree": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Newick tree to analyze, or a file of several trees for an ensemble gsi.",
+                    "help_text": "A single Newick tree, or a file holding one tree per line (RAxML-NG bootstrap replicates, or a posterior sample). With more than one tree the ensemble statistic gsi_T is reported, weighting each topology by its frequency in the sample.\n\nRequired for `--workflow ANALYZE`.",
+                    "fa_icon": "fas fa-tree"
+                },
+                "groups": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Two-column table (TSV or CSV) mapping each tip label to a group name.",
+                    "help_text": "One row per tip, with an optional header:\n\n```\ntip_label\\tgroup\nSAMPLE_1\\tquery\nGCA_000012345.1\\treference\n```\n\nAt least two groups are needed. Tips left out of the file are rejected unless `--gsi_ignore_unlabeled` is set.\n\nRequired for `--workflow ANALYZE`. The main pipeline builds this file itself when `--run_gsi` is used.",
+                    "fa_icon": "fas fa-tags"
+                },
+                "run_gsi": {
+                    "type": "boolean",
+                    "description": "Run the genealogical sorting index on the RAxML-NG tree built by the pipeline.",
+                    "help_text": "Requires `--run_raxml`. Labels your input isolates as one group and the reference genomes downloaded from NCBI as another, then scores how far each group has sorted. Results land in `<outdir>/gsi/` and in the MultiQC report.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "gsi_root": {
+                    "type": "string",
+                    "description": "How to root the tree: 'as-is', 'midpoint' or 'outgroup'.",
+                    "default": "as-is",
+                    "enum": [
+                        "as-is",
+                        "midpoint",
+                        "outgroup"
+                    ],
+                    "help_text": "The gsi is undefined on an unrooted tree, and a mis-rooted tree still produces plausible-looking values, so the rooting is always an explicit choice.\n\n- **as-is**: trust the Newick as written. Correct when the tree is already rooted.\n- **midpoint**: root at the midpoint of the longest tip-to-tip path. Needs branch lengths.\n- **outgroup**: root on the clade named by `--gsi_outgroup`.\n\nRAxML-NG output is unrooted, so `midpoint` or `outgroup` is normally what you want for a tree straight out of the pipeline.",
+                    "fa_icon": "fas fa-anchor"
+                },
+                "gsi_outgroup": {
+                    "type": "string",
+                    "description": "Comma-separated tip labels to root on. Required when --gsi_root outgroup.",
+                    "help_text": "One or more tip labels, e.g. `GCA_000012345.1` or `GCA_000012345.1,GCA_000067890.1`. The tree is rooted on the branch subtending their most recent common ancestor, so the outgroup should be monophyletic.",
+                    "fa_icon": "fas fa-anchor"
+                },
+                "gsi_permutations": {
+                    "type": "integer",
+                    "description": "Number of label permutations used to estimate the p-value.",
+                    "default": 9999,
+                    "help_text": "The observed labeling counts as one replicate, so the default of 9999 gives the 10^4 replicates used in the original paper. Set to 0 to skip the significance test and report the gsi alone.\n\nPrecision of the p-value is set by this number; 9999 permutations on a 100-tip tree take a couple of seconds.",
+                    "fa_icon": "fas fa-dice"
+                },
+                "gsi_seed": {
+                    "type": "integer",
+                    "description": "Random seed for the permutation test, so runs are reproducible.",
+                    "default": 42,
+                    "fa_icon": "fas fa-seedling"
+                },
+                "gsi_groups_to_test": {
+                    "type": "string",
+                    "description": "Comma-separated subset of group names to report (default: all groups).",
+                    "fa_icon": "fas fa-filter"
+                },
+                "gsi_ignore_unlabeled": {
+                    "type": "boolean",
+                    "description": "Allow tree tips that carry no group label; they stay on the tree but take no part in the statistic.",
+                    "help_text": "Unlabeled tips still contribute to the tree topology, and so to min(gs), but are not counted as members of any group and are not permuted. Without this flag a tip missing from the groups file is an error.",
+                    "fa_icon": "fas fa-eye-slash"
+                },
+                "gsi_query_label": {
+                    "type": "string",
+                    "description": "Group name given to the input isolates when --run_gsi builds the groups file.",
+                    "default": "query",
+                    "fa_icon": "fas fa-tag"
+                },
+                "gsi_reference_label": {
+                    "type": "string",
+                    "description": "Group name given to the downloaded reference genomes when --run_gsi builds the groups file.",
+                    "default": "reference",
+                    "fa_icon": "fas fa-tag"
                 }
             }
         }
@@ -377,6 +470,9 @@
         },
         {
             "$ref": "#/definitions/build_options"
+        },
+        {
+            "$ref": "#/definitions/analyze_options"
         },
         {
             "$ref": "#/definitions/generic_options"

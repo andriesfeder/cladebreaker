@@ -19,6 +19,7 @@ nextflow.enable.dsl = 2
 
 include { CLADEBREAKER       } from './workflows/cladebreaker'
 include { BUILD              } from './workflows/build'
+include { ANALYZE            } from './workflows/analyze'
 
 /*
 ========================================================================================
@@ -31,8 +32,12 @@ include { BUILD              } from './workflows/build'
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
+    // BUILD and ANALYZE take no samplesheet, and WorkflowMain.initialise()
+    // exits without one, so each validates its own inputs instead.
     if (params.workflow == 'BUILD') {
         BUILD ()
+    } else if (params.workflow == 'ANALYZE') {
+        ANALYZE ()
     } else {
         WorkflowMain.initialise(workflow, params, log)
         CLADEBREAKER ()

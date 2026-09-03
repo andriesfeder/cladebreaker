@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
+- **`ANALYZE` workflow** (`workflows/analyze.nf`): New entry point that runs statistics on an existing phylogenetic tree without rebuilding it — `nextflow run main.nf --workflow ANALYZE --tree <tree.nwk> --groups <groups.tsv>`
+- **`bin/gsi.py`**: Genealogical sorting index (gsi) of [Cummings, Neel & Shaw (2008)](https://doi.org/10.1111/j.1558-5646.2008.00442.x), quantifying how far each labeled group on a rooted tree has sorted towards exclusive ancestry (0 = mixed, 1 = monophyletic), with a label-permutation p-value and the ensemble statistic `gsi_T` across bootstrap or posterior trees. Outputs TSV, JSON, and a MultiQC custom-content table
+- **`bin/gsi_groups.py`**: Builds the tip-to-group table by resolving tree tip labels against the pipeline's query and reference sample IDs, tolerating the suffixes annotation and pangenome steps append while refusing ambiguous matches
+- **`modules/local/gsi/main.nf`** and **`modules/local/gsi/groups.nf`**: New `GSI` and `GSI_GROUPS` processes (`bioconda::dendropy=5.0.13`, container `quay.io/biocontainers/dendropy:5.0.13--pyhdfd78af_0`)
+- **`--run_gsi` parameter**: Runs the gsi on the tree built by the main pipeline, scoring the input isolates against the reference genomes WhatsGNU selected. Requires `--run_raxml`
+- **gsi parameters**: `--tree`, `--groups`, `--gsi_root` (`as-is`/`midpoint`/`outgroup`), `--gsi_outgroup`, `--gsi_permutations`, `--gsi_seed`, `--gsi_groups_to_test`, `--gsi_ignore_unlabeled`, `--gsi_query_label`, `--gsi_reference_label`
+- **`--workflow` parameter**: Now declared in `nextflow.config` and the schema (`BUILD` or `ANALYZE`); it was previously only ever set from the command line
+- **`modules/nf-core/modules/raxmlng/main.nf`**: Added optional `bootstrap_trees` output (`*.raxml.bootstraps`) so bootstrap replicates can feed the ensemble gsi
+- **`conf/test_analyze.config`** and the `test_analyze` profile: Runs the gsi against the worked example from Fig. 1 of the original paper, where the expected values are published
+- **`tests/gsi/`**: Test suite for both scripts (21 tests), including the paper's Fig. 1 and Fig. 2 worked examples, an exhaustive enumeration of the null distribution to check the permutation sampler, and midpoint-rooting correctness
+- **`modules/local/bakta/main.nf`**: New `BAKTA` process for genome annotation using [Bakta](https://github.com/oschwengers/bakta) as an alternative to Prokka in both the main pipeline and `cladebreaker build` (`bioconda::bakta`, container `quay.io/biocontainers/bakta:1.9.4`)
+- **`--annotator` parameter**: Selects the annotation tool — `prokka` (default) or `bakta` — for both user assemblies and downloaded reference genomes in the main pipeline, and for reference genomes in the `cladebreaker build` workflow
+- **`--bakta_db PATH` parameter**: Path to a local Bakta database directory; required when `--annotator bakta` is set. Database can be downloaded with `bakta_db download`
+
+### `Changed`
+
+- **`bin/gsi.py`**: Implements midpoint rooting directly rather than calling DendroPy's `Tree.reroot_at_midpoint()`. As of DendroPy 5.0.13 that method walks up from only one end of the diameter and raises a bare `AssertionError` when floating-point drift leaves distance remaining at the MRCA; across 400 random trees it failed on 94 and returned an off-midpoint rooting on a further 46
+- **`nextflow.config`**: Added `run_gsi` and `gsi_ignore_unlabeled` to `schema_ignore_params`, alongside the existing `run_raxml`. Boolean flags passed bare on the command line arrive as the string `"true"`, which the schema validator rejects as a `Boolean`; ignoring them skips validation only, and they remain documented in `--help`
+
 - **`modules/local/bakta/main.nf`**: New `BAKTA` process for genome annotation using [Bakta](https://github.com/oschwengers/bakta) as an alternative to Prokka in both the main pipeline and `cladebreaker build` (`bioconda::bakta`, container `quay.io/biocontainers/bakta:1.9.4`)
 - **`--annotator` parameter**: Selects the annotation tool — `prokka` (default) or `bakta` — for both user assemblies and downloaded reference genomes in the main pipeline, and for reference genomes in the `cladebreaker build` workflow
 - **`--bakta_db PATH` parameter**: Path to a local Bakta database directory; required when `--annotator bakta` is set. Database can be downloaded with `bakta_db download`

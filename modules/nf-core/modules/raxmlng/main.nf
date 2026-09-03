@@ -14,9 +14,10 @@ process RAXMLNG {
 
 
     output:
-    path "*.raxml.bestTree", emit: phylogeny
-    path "*.raxml.support" , optional:true, emit: phylogeny_bootstrapped
-    path "versions.yml"    , emit: versions
+    path "*.raxml.bestTree"  , emit: phylogeny
+    path "*.raxml.support"   , optional:true, emit: phylogeny_bootstrapped
+    path "*.raxml.bootstraps", optional:true, emit: bootstrap_trees
+    path "versions.yml"      , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
