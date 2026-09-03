@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`ANALYZE` workflow** (`workflows/analyze.nf`): New entry point that runs statistics on an existing phylogenetic tree without rebuilding it — `nextflow run main.nf --workflow ANALYZE --tree <tree.nwk> --groups <groups.tsv>`
 - **`bin/gsi.py`**: Genealogical sorting index (gsi) of [Cummings, Neel & Shaw (2008)](https://doi.org/10.1111/j.1558-5646.2008.00442.x), quantifying how far each labeled group on a rooted tree has sorted towards exclusive ancestry (0 = mixed, 1 = monophyletic), with a label-permutation p-value and the ensemble statistic `gsi_T` across bootstrap or posterior trees. Outputs TSV, JSON, and a MultiQC custom-content table
+- **`cladebreaker analyze` subcommand** (`bin/cladebreaker/cladebreaker`): Dispatches to the `ANALYZE` workflow, alongside the existing `build` and `prepare` subcommands, with its own `--help`
 - **`bin/gsi_groups.py`**: Builds the tip-to-group table by resolving tree tip labels against the pipeline's query and reference sample IDs, tolerating the suffixes annotation and pangenome steps append while refusing ambiguous matches
 - **`modules/local/gsi/main.nf`** and **`modules/local/gsi/groups.nf`**: New `GSI` and `GSI_GROUPS` processes (`bioconda::dendropy=5.0.13`, container `quay.io/biocontainers/dendropy:5.0.13--pyhdfd78af_0`)
 - **`--run_gsi` parameter**: Runs the gsi on the tree built by the main pipeline, scoring the input isolates against the reference genomes WhatsGNU selected. Requires `--run_raxml`

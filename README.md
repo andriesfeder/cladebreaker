@@ -44,6 +44,11 @@ cladebreaker \
   --db /path/to/database.pickle \
   --o \
   -profile conda
+
+# 5. (Optional) Score how far your isolates have diverged from their closest
+#    public relatives. Add --run_gsi --gsi_root midpoint to step 4 to build the
+#    tree and score it in one pass, or run it on any rooted tree you already have:
+cladebreaker analyze --tree tree.nwk --groups groups.tsv --gsi_root midpoint
 ```
 ---
 
@@ -82,17 +87,21 @@ Cladebreaker is invoked through a single entry point with several subcommands:
 cladebreaker [options]            Run the main analysis pipeline
 cladebreaker build [options]      Download or build a WhatsGNU database
 cladebreaker prepare [options]    Generate an input samplesheet
+cladebreaker analyze [options]    Run statistics on an existing phylogenetic tree
 cladebreaker citations            Print citations for all tools
 cladebreaker version              Print the cladebreaker version
 ```
 
-The typical workflow follows three steps:
+The typical workflow follows three steps, with an optional fourth:
 
 ```
 Step 1 ── cladebreaker build    →  obtain a WhatsGNU database for your species
 Step 2 ── cladebreaker prepare  →  generate a samplesheet from your input files
 Step 3 ── cladebreaker          →  run the full analysis pipeline
+Step 4 ── cladebreaker analyze  →  quantify lineage divergence on a tree  (optional)
 ```
+
+Step 4 is optional in two senses: you can fold it into Step 3 with `--run_gsi`, or run it on its own against any rooted tree you already have — including one built outside this pipeline.
 
 ---
 
@@ -305,11 +314,70 @@ See [Genealogical Sorting Index](#genealogical-sorting-index) for what the stati
 
 | Option | Default | Description |
 |---|---|---|
+| `--workflow STR` | — | Entry point to run: unset for the main pipeline, or `BUILD` / `ANALYZE`. The `cladebreaker build` and `cladebreaker analyze` subcommands set this for you |
 | `--cleanup_workdir` | — | Delete the Nextflow `work/` directory after a successful run |
 | `--force` | `false` | Overwrite existing output files |
 | `--monochrome_logs` | — | Disable coloured log output |
 | `--multiqc_config PATH` | — | Custom MultiQC config file |
 | `--email_on_fail STR` | — | Email address for failure notifications only |
+
+---
+
+## Step 4 — Analyze an Existing Tree (`cladebreaker analyze`)
+
+The `analyze` subcommand runs statistics on a phylogenetic tree that already exists, without rebuilding anything. Currently that means the [genealogical sorting index](#genealogical-sorting-index), which scores how far each labeled group of tips has sorted towards exclusive ancestry.
+
+Use it when you want to:
+
+- score a tree built outside this pipeline, or one from an earlier run
+- re-score a tree under a different rooting, or with different group definitions, without repeating assembly and alignment
+- compare several isolate clusters separately rather than lumping all your isolates into one group
+- fold phylogenetic uncertainty into the result by passing bootstrap or posterior trees
+
+```sh
+cladebreaker analyze \
+  --tree tree.nwk \
+  --groups groups.tsv \
+  --gsi_root midpoint \
+  --outdir results/ \
+  -profile conda
+```
+
+Equivalently, straight through Nextflow:
+
+```sh
+nextflow run main.nf --workflow ANALYZE \
+  --tree tree.nwk --groups groups.tsv --gsi_root midpoint -profile conda
+```
+
+### `cladebreaker analyze` options
+
+| Option | Default | Description |
+|---|---|---|
+| `--tree PATH` | required | Newick tree to analyze, or a file of several trees for an ensemble |
+| `--groups PATH` | required | Two-column table mapping each tip label to a group name |
+| `--outdir PATH` | `./results` | Directory where results will be saved |
+
+All of the [genealogical sorting index options](#genealogical-sorting-index-options) apply here too — `--gsi_root`, `--gsi_outgroup`, `--gsi_permutations`, `--gsi_seed`, `--gsi_groups_to_test`, and `--gsi_ignore_unlabeled`.
+
+### The groups file
+
+Two columns, tip label and group name, as TSV or CSV. A header row is optional:
+
+```
+tip_label	group
+SAMPLE_1	outbreak
+SAMPLE_2	outbreak
+SAMPLE_3	historical
+GCA_000012345.1	reference
+GCA_000067890.1	reference
+```
+
+Any number of groups is allowed, and each is scored separately. Every tip in the tree must appear in the file unless `--gsi_ignore_unlabeled` is set; unlabeled tips still shape the topology (and so the normalisation) but belong to no group.
+
+When you use `--run_gsi` inside a normal pipeline run, this file is generated for you — your input isolates against the reference genomes WhatsGNU selected — and published to `gsi/gsi_groups.tsv`.
+
+> **Important**: the gsi is undefined on an unrooted tree, and a mis-rooted tree still yields plausible-looking values. `--gsi_root as-is` trusts the Newick as written, which is correct only if the tree is genuinely rooted; RAxML-NG output is not. Use `--gsi_root midpoint` or `--gsi_root outgroup` for a tree from this pipeline.
 
 ---
 
@@ -391,30 +459,9 @@ nextflow run main.nf \
   -profile conda,local
 ```
 
-### On any rooted tree (`cladebreaker analyze`)
+### On any rooted tree
 
-The `ANALYZE` workflow takes a tree you already have, from this pipeline or anywhere else:
-
-```bash
-nextflow run main.nf --workflow ANALYZE \
-  --tree tree.nwk \
-  --groups groups.tsv \
-  --gsi_root midpoint \
-  --outdir results \
-  -profile conda
-```
-
-The groups file is two columns, tip label and group name (TSV or CSV, header optional):
-
-```
-tip_label	group
-SAMPLE_1	outbreak
-SAMPLE_2	outbreak
-GCA_000012345.1	reference
-GCA_000067890.1	reference
-```
-
-Any number of groups is allowed, so this is also the way to score several isolate clusters separately rather than lumping them together. Tips missing from the file are an error unless `--gsi_ignore_unlabeled` is set; unlabeled tips still shape the topology but join no group.
+To score a tree you already have — from an earlier run, or built elsewhere entirely — and to define your own groups rather than the default query-versus-reference split, use [`cladebreaker analyze`](#step-4--analyze-an-existing-tree-cladebreaker-analyze).
 
 ### Accounting for phylogenetic uncertainty
 
@@ -490,6 +537,9 @@ Phylogenetic alignment (choose one mode)
 
 Phylogenetic tree (optional)
     └─ ML inference        → RAxML-NG
+
+Lineage divergence (optional, --run_gsi)
+    └─ Sorting index       → gsi
 
 Quality reporting
     └─ Aggregate report    → MultiQC
@@ -580,6 +630,7 @@ Cladebreaker uses Nextflow profiles to configure the software environment. Speci
 | `charliecloud` | Run each process with Charliecloud. |
 | `local` | Laptop/workstation preset: caps resources at 8 CPUs, 14 GB RAM, 48 h. Use with `conda,local`. |
 | `test` | Minimal test dataset for pipeline validation. Requires no additional parameters. |
+| `test_analyze` | Minimal test of the `analyze` workflow, against the published worked example from the gsi paper. Requires no additional parameters. |
 
 Multiple profiles can be combined:
 

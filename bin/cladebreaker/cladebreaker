@@ -10,6 +10,7 @@
 #
 #   cladebreaker build      - Download or build a WhatsGNU database for a species
 #   cladebreaker prepare    - Generate an input samplesheet from FASTQs/assemblies
+#   cladebreaker analyze    - Run statistics on an existing phylogenetic tree
 #   cladebreaker citations  - Print citations for all tools used by cladebreaker
 #   cladebreaker version    - Print the cladebreaker version
 #   cladebreaker --help     - Print main pipeline usage
@@ -19,6 +20,7 @@
 #   cladebreaker build --taxid 1280
 #   cladebreaker build --taxid 470 --genome_count 100 --outdir ./databases
 #   cladebreaker prepare --fastqs /path/to/reads/ --output samplesheet.csv
+#   cladebreaker analyze --tree tree.nwk --groups groups.tsv --gsi_root midpoint
 #   cladebreaker citations
 
 VERSION="0.3.1"
@@ -37,6 +39,7 @@ if [[ $# == 0 ]]; then
     echo "  cladebreaker [options]                 Run the main analysis pipeline"
     echo "  cladebreaker build [options]           Download or build a WhatsGNU database"
     echo "  cladebreaker prepare [options]         Generate an input samplesheet"
+    echo "  cladebreaker analyze [options]         Run statistics on an existing tree"
     echo "  cladebreaker citations                 Print tool citations"
     echo "  cladebreaker version                   Print cladebreaker version"
     echo ""
@@ -46,6 +49,7 @@ if [[ $# == 0 ]]; then
     echo "Subcommand usage:"
     echo "  cladebreaker build --help"
     echo "  cladebreaker prepare --help"
+    echo "  cladebreaker analyze --help"
     echo ""
     echo "Example commands:"
     echo "  cladebreaker --input samplesheet.csv --db /path/to/db.pickle -profile conda"
@@ -53,6 +57,7 @@ if [[ $# == 0 ]]; then
     echo "  cladebreaker build --taxid 470 --genome_count 100 --outdir ./databases"
     echo "  cladebreaker prepare --fastqs /path/to/reads/ --output samplesheet.csv"
     echo "  cladebreaker prepare --assemblies /path/to/assemblies/ --output samplesheet.csv"
+    echo "  cladebreaker analyze --tree tree.nwk --groups groups.tsv --gsi_root midpoint"
     echo ""
     exit 0
 fi
@@ -65,6 +70,36 @@ if [[ "$1" == "build" ]]; then
 
 elif [[ "$1" == "prepare" ]]; then
     "${BIN_DIR}/cladebreaker-prepare.py" "${@:2}"
+
+elif [[ "$1" == "analyze" ]]; then
+    # Runs the ANALYZE workflow on an existing tree. Everything after the
+    # subcommand is handed straight to Nextflow, so --help prints pipeline usage.
+    if [[ "$2" == "--help" ]] || [[ "$2" == "-h" ]]; then
+        echo "cladebreaker analyze - run statistics on an existing phylogenetic tree"
+        echo ""
+        echo "Usage:"
+        echo "  cladebreaker analyze --tree <tree.nwk> --groups <groups.tsv> [options]"
+        echo ""
+        echo "Required:"
+        echo "  --tree PATH               Newick tree, or a file of trees for an ensemble"
+        echo "  --groups PATH             Two-column table mapping tip label to group"
+        echo ""
+        echo "Options:"
+        echo "  --gsi_root STR            Rooting: as-is (default), midpoint, or outgroup"
+        echo "  --gsi_outgroup STR        Tip label(s) to root on, for --gsi_root outgroup"
+        echo "  --gsi_permutations INT    Permutations for the p-value (default: 9999)"
+        echo "  --gsi_seed INT            Random seed (default: 42)"
+        echo "  --gsi_groups_to_test STR  Comma-separated subset of groups to report"
+        echo "  --gsi_ignore_unlabeled    Allow tips that carry no group label"
+        echo "  --outdir PATH             Output directory (default: ./results)"
+        echo ""
+        echo "Example:"
+        echo "  cladebreaker analyze --tree tree.nwk --groups groups.tsv \\"
+        echo "    --gsi_root midpoint -profile conda"
+        echo ""
+        exit 0
+    fi
+    nextflow run "${CLADEBREAKER_NF}/main.nf" --workflow ANALYZE "${@:2}"
 
 elif [[ "$1" == "citations" ]]; then
     "${BIN_DIR}/cladebreaker-citations.py" "${@:2}"
