@@ -5,3 +5,5 @@ results/
 testing/
 testing*
 *.pyc
+db-light/
+tests/
