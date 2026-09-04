@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
+- **`bin/monophyly.py`**: Reports whether each group is a clade, the fraction of an ensemble in which it is, the number of separate clusters a broken group falls into, and the named clade-breaking tips
+- **`bin/rosenberg.py`**: Rosenberg (2007) `P_A` and `P_AB` for chance monophyly, Holm-adjusted across groups, plus the k-group joint probability of Zhu, Degnan & Steel (2011) Theorem 5.1 evaluated by an O(3^k) subset recursion rather than enumerating (2k-3)!! trees. Computed in log space so realistic sample sizes neither overflow the binomial nor underflow the float
+- **`bin/slatkin_maddison.py`**: Slatkin & Maddison (1989) migration test by Fitch parsimony, with the polytomy and missing-data generalisations, permutation p-value, and the null mean/SD for context. Independent of rooting
+- **`bin/snp_separation.py`**: Within- and between-group SNP distance summaries with `ratio_of_means` and `gap` (min-between over max-within), a permutation p-value, and a pairwise between-group table. Ratios are defined by this pipeline, not drawn from the literature, and say so in every output
+- **`bin/analyze_pdf.py`** and the `ANALYZE_PDF` process: Renders the results as a PDF -- the rooted tree the statistics were computed on with tips marked by group, then one section per test, then the SNP distance ranges and caveats (`conda-forge::matplotlib-base`). Colour is used for at most three groups because a fourth categorical slot falls below the normal-vision separation floor; beyond that identity moves to marker shape, and tip labels always carry it regardless
+- **`--no-report` parameter**: Skips the PDF (`--no_report` is accepted too). The PDF is also skipped automatically when `--tests` does not select `monophyly`, which is the test that writes the rooted tree the figure draws
+- **`monophyly.py`**: Also writes `<prefix>.rooted.nwk`, the tree the tests ran on, so the report figure draws that rather than the input file
+- **`bin/analyze_report.py`**: Applies the decision path — Rosenberg where the groups are clades, Slatkin-Maddison where they are not — and writes a combined verdict. All tests run regardless; the decision only chooses which result leads
+- **`bin/cladebreaker_phylo.py`**: Shared tree loading, rooting, groups parsing, tree indexing, monophyly and label-permutation driver, extracted from `gsi.py` so every analyze tool builds on the same primitives
+- **`--tests` parameter**: `auto` (the default, runs the whole decision path) or a comma-separated subset of `gsi,monophyly,rosenberg,slatkin_maddison,snp_separation`
+- **`--run_analysis` parameter**: Runs the full decision path on the tree built by the main pipeline, superseding `--run_gsi` which runs the gsi alone
+- **`--alignment` / `--distances` parameters**: Core alignment (via `SNP_DISTS`, `bioconda::snp-dists=1.2.0`) or a precomputed matrix, for the SNP separation test
+- **`--gsi_alpha` and `--gsi_max_joint_groups` parameters**: Significance level for the report, and the group-count cap on the joint monophyly probability
+- **`modules/local/analyze/`**: `MONOPHYLY`, `ROSENBERG`, `SLATKIN_MADDISON`, `SNP_DISTS`, `SNP_SEPARATION` and `ANALYZE_REPORT` processes, publishing to `<outdir>/analyze/`
 - **`ANALYZE` workflow** (`workflows/analyze.nf`): New entry point that runs statistics on an existing phylogenetic tree without rebuilding it — `nextflow run main.nf --workflow ANALYZE --tree <tree.nwk> --groups <groups.tsv>`
 - **`bin/gsi.py`**: Genealogical sorting index (gsi) of [Cummings, Neel & Shaw (2008)](https://doi.org/10.1111/j.1558-5646.2008.00442.x), quantifying how far each labeled group on a rooted tree has sorted towards exclusive ancestry (0 = mixed, 1 = monophyletic), with a label-permutation p-value and the ensemble statistic `gsi_T` across bootstrap or posterior trees. Outputs TSV, JSON, and a MultiQC custom-content table
 - **`cladebreaker analyze` subcommand** (`bin/cladebreaker/cladebreaker`): Dispatches to the `ANALYZE` workflow, alongside the existing `build` and `prepare` subcommands, with its own `--help`
@@ -16,8 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **gsi parameters**: `--tree`, `--groups`, `--gsi_root` (`as-is`/`midpoint`/`outgroup`), `--gsi_outgroup`, `--gsi_permutations`, `--gsi_seed`, `--gsi_groups_to_test`, `--gsi_ignore_unlabeled`, `--gsi_query_label`, `--gsi_reference_label`
 - **`--workflow` parameter**: Now declared in `nextflow.config` and the schema (`BUILD` or `ANALYZE`); it was previously only ever set from the command line
 - **`modules/nf-core/modules/raxmlng/main.nf`**: Added optional `bootstrap_trees` output (`*.raxml.bootstraps`) so bootstrap replicates can feed the ensemble gsi
-- **`conf/test_analyze.config`** and the `test_analyze` profile: Runs the gsi against the worked example from Fig. 1 of the original paper, where the expected values are published
-- **`tests/gsi/`**: Test suite for both scripts (21 tests), including the paper's Fig. 1 and Fig. 2 worked examples, an exhaustive enumeration of the null distribution to check the permutation sampler, and midpoint-rooting correctness
+- **`conf/test_analyze.config`** and the `test_analyze` profile: Runs the whole decision path against the worked example from Fig. 1 of Cummings, Neel & Shaw (2008). One group there is a clade and the other is not, so a single run exercises both branches -- Rosenberg for the first, Slatkin-Maddison for the second
+- **`tests/gsi/cummings_fig1.aln`**: A 30-column alignment over the same tips, built so every distance is checkable by hand (2 SNPs within group a, 4 within group b, 9 between), giving the test profile coverage of the SNP separation test
+- **`tests/gsi/`**: Test suite for all the analyze scripts (75 tests), including Rosenberg's 28 published table values and four worked examples, the Zhu et al. `p(2,2,2)=2/225` example with its reduction to `P_AB` at k=2, Fitch parsimony cross-checked against an exhaustive minimum over every internal-node labeling, rooting-invariance of the Slatkin-Maddison statistic checked at every edge, the gsi paper's Fig. 1 and Fig. 2 worked examples with an exhaustive enumeration of the null distribution, midpoint-rooting correctness, and the sample-size power floors that limit all three permutation tests
 - **`modules/local/bakta/main.nf`**: New `BAKTA` process for genome annotation using [Bakta](https://github.com/oschwengers/bakta) as an alternative to Prokka in both the main pipeline and `cladebreaker build` (`bioconda::bakta`, container `quay.io/biocontainers/bakta:1.9.4`)
 - **`--annotator` parameter**: Selects the annotation tool — `prokka` (default) or `bakta` — for both user assemblies and downloaded reference genomes in the main pipeline, and for reference genomes in the `cladebreaker build` workflow
 - **`--bakta_db PATH` parameter**: Path to a local Bakta database directory; required when `--annotator bakta` is set. Database can be downloaded with `bakta_db download`
@@ -25,11 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Changed`
 
 - **`bin/gsi.py`**: Implements midpoint rooting directly rather than calling DendroPy's `Tree.reroot_at_midpoint()`. As of DendroPy 5.0.13 that method walks up from only one end of the diameter and raises a bare `AssertionError` when floating-point drift leaves distance remaining at the MRCA; across 400 random trees it failed on 94 and returned an off-midpoint rooting on a further 46
-- **`nextflow.config`**: Added `run_gsi` and `gsi_ignore_unlabeled` to `schema_ignore_params`, alongside the existing `run_raxml`. Boolean flags passed bare on the command line arrive as the string `"true"`, which the schema validator rejects as a `Boolean`; ignoring them skips validation only, and they remain documented in `--help`
-
-- **`modules/local/bakta/main.nf`**: New `BAKTA` process for genome annotation using [Bakta](https://github.com/oschwengers/bakta) as an alternative to Prokka in both the main pipeline and `cladebreaker build` (`bioconda::bakta`, container `quay.io/biocontainers/bakta:1.9.4`)
-- **`--annotator` parameter**: Selects the annotation tool — `prokka` (default) or `bakta` — for both user assemblies and downloaded reference genomes in the main pipeline, and for reference genomes in the `cladebreaker build` workflow
-- **`--bakta_db PATH` parameter**: Path to a local Bakta database directory; required when `--annotator bakta` is set. Database can be downloaded with `bakta_db download`
+- **`bin/gsi.py`**: Now imports its tree handling from the new `bin/cladebreaker_phylo.py` rather than defining it. Verified behaviour-preserving: the existing tests pass and output on a real 77-tip tree is byte-identical, seeded permutation p-values included
+- **`nextflow.config`**: Added `run_gsi`, `gsi_ignore_unlabeled` and `run_analysis` to `schema_ignore_params`, alongside the existing `run_raxml`. Boolean flags passed bare on the command line arrive as the string `"true"`, which the schema validator rejects as a `Boolean`; ignoring them skips validation only, and they remain documented in `--help`
 
 ### `Fixed`
 

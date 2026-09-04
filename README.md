@@ -18,7 +18,7 @@
 - **Integrated de novo assembly**: Shovill assembles raw reads in-pipeline
 - **Automated database management**: `cladebreaker build` downloads pre-built WhatsGNU databases for common species or constructs a custom database from NCBI
 - **Pre-built databases available**: ready-to-use databases for *S. aureus*, *S. epidermidis*, *K. pneumoniae*, *P. aeruginosa*, *E. coli*, *S. enterica*, *M. tuberculosis*, and *C. difficile*
-- **Quantified lineage divergence**: the genealogical sorting index (gsi) scores how far your isolates have sorted towards exclusive ancestry relative to the public genomes, with a permutation p-value — run it on the pipeline's own tree with `--run_gsi`, or on any rooted tree with `cladebreaker analyze`
+- **Quantified lineage divergence**: `cladebreaker analyze` tests whether your isolates are genuinely distinct from their closest public relatives — monophyly, Rosenberg's chance-monophyly probability, the genealogical sorting index, the Slatkin–Maddison migration test, and SNP separation — and reports a single verdict. Run it on the pipeline's own tree with `--run_analysis`, or on any rooted tree
 - **Reproducible**: built on [Nextflow](https://www.nextflow.io/) with full support for Conda, Docker, and Singularity
 - **MultiQC report**: a single HTML quality-control report covering read quality, assembly statistics, and software versions
 
@@ -45,9 +45,9 @@ cladebreaker \
   --o \
   -profile conda
 
-# 5. (Optional) Score how far your isolates have diverged from their closest
-#    public relatives. Add --run_gsi --gsi_root midpoint to step 4 to build the
-#    tree and score it in one pass, or run it on any rooted tree you already have:
+# 5. (Optional) Test whether your isolates are distinct from their closest
+#    public relatives. Add --run_analysis --gsi_root midpoint to step 4 to build
+#    the tree and test it in one pass, or run it on a tree you already have:
 cladebreaker analyze --tree tree.nwk --groups groups.tsv --gsi_root midpoint
 ```
 ---
@@ -98,10 +98,10 @@ The typical workflow follows three steps, with an optional fourth:
 Step 1 ── cladebreaker build    →  obtain a WhatsGNU database for your species
 Step 2 ── cladebreaker prepare  →  generate a samplesheet from your input files
 Step 3 ── cladebreaker          →  run the full analysis pipeline
-Step 4 ── cladebreaker analyze  →  quantify lineage divergence on a tree  (optional)
+Step 4 ── cladebreaker analyze  →  test whether your isolates are distinct  (optional)
 ```
 
-Step 4 is optional in two senses: you can fold it into Step 3 with `--run_gsi`, or run it on its own against any rooted tree you already have — including one built outside this pipeline.
+Step 4 is optional in two senses: you can fold it into Step 3 with `--run_analysis`, or run it on its own against any rooted tree you already have — including one built outside this pipeline.
 
 ---
 
@@ -289,7 +289,9 @@ cladebreaker \
 
 | Option | Default | Description |
 |---|---|---|
-| `--run_gsi` | — | Run the gsi on the tree the pipeline builds (requires `--run_raxml`) |
+| `--run_analysis` | — | Run the full decision path on the tree the pipeline builds (requires `--run_raxml`) |
+| `--run_gsi` | — | Run the gsi alone on that tree (requires `--run_raxml`) |
+| `--gsi_alpha FLOAT` | `0.05` | Significance level used by the report |
 | `--gsi_root STR` | `as-is` | How to root the tree: `as-is`, `midpoint`, or `outgroup` |
 | `--gsi_outgroup STR` | — | Comma-separated tip labels to root on (required for `--gsi_root outgroup`) |
 | `--gsi_permutations INT` | `9999` | Permutations for the p-value; `0` skips the significance test |
@@ -325,7 +327,19 @@ See [Genealogical Sorting Index](#genealogical-sorting-index) for what the stati
 
 ## Step 4 — Analyze an Existing Tree (`cladebreaker analyze`)
 
-The `analyze` subcommand runs statistics on a phylogenetic tree that already exists, without rebuilding anything. Currently that means the [genealogical sorting index](#genealogical-sorting-index), which scores how far each labeled group of tips has sorted towards exclusive ancestry.
+The `analyze` subcommand runs statistics on a phylogenetic tree that already exists, without rebuilding anything. By default it runs a decision path over five tests and reports a single verdict:
+
+| Test | Question it answers |
+|---|---|
+| `monophyly` | Is each labeled group a clade, and if not, which tips break it? |
+| `rosenberg` | If it is a clade, could that be chance? |
+| `gsi` | If it is not, how far towards exclusive ancestry has it sorted? |
+| `slatkin_maddison` | If it is not, is the residual mixing still less than random? |
+| `snp_separation` | How far apart are the groups in SNP distance? |
+
+The path is: **monophyletic → Rosenberg** is the formal test, reported alongside SNP separation; **not monophyletic → Slatkin–Maddison** asks whether the residual mixing is still significantly less than random. That second branch is a weaker but real positive result, not a failure — most closely related isolates are not strictly monophyletic, and treating that as a dead end throws away the signal that is there.
+
+Every selected test runs regardless and all outputs are kept; the decision only chooses which result leads the report. They are all cheap next to building the tree.
 
 Use it when you want to:
 
@@ -338,9 +352,16 @@ Use it when you want to:
 cladebreaker analyze \
   --tree tree.nwk \
   --groups groups.tsv \
+  --alignment core.aln \
   --gsi_root midpoint \
   --outdir results/ \
   -profile conda
+```
+
+To run a single test rather than the whole path:
+
+```sh
+cladebreaker analyze --tree tree.nwk --groups groups.tsv --tests gsi
 ```
 
 Equivalently, straight through Nextflow:
@@ -356,9 +377,26 @@ nextflow run main.nf --workflow ANALYZE \
 |---|---|---|
 | `--tree PATH` | required | Newick tree to analyze, or a file of several trees for an ensemble |
 | `--groups PATH` | required | Two-column table mapping each tip label to a group name |
+| `--tests STR` | `auto` | `auto`, or a comma-separated subset of `gsi,monophyly,rosenberg,slatkin_maddison,snp_separation` |
+| `--alignment PATH` | — | Core alignment; enables the SNP separation test via snp-dists |
+| `--distances PATH` | — | A precomputed snp-dists matrix, instead of `--alignment` |
+| `--gsi_alpha FLOAT` | `0.05` | Significance level used by the report |
+| `--no-report` | — | Skip rendering the PDF report (`--no_report` also works) |
 | `--outdir PATH` | `./results` | Directory where results will be saved |
 
 All of the [genealogical sorting index options](#genealogical-sorting-index-options) apply here too — `--gsi_root`, `--gsi_outgroup`, `--gsi_permutations`, `--gsi_seed`, `--gsi_groups_to_test`, and `--gsi_ignore_unlabeled`.
+
+Under `auto`, `snp_separation` is skipped when no alignment is supplied; naming it explicitly without one is an error.
+
+### The PDF report
+
+Every `auto` run also writes `cladebreaker.analyze_report.pdf`:
+
+- **page 1** — the rooted tree the statistics were actually computed on (not the file you passed in, which differs whenever `--gsi_root` did anything), with tips carrying their group's colour and marker, a scale bar, and the conclusion beneath it
+- **page 2** — monophyly, Rosenberg, the gsi and Slatkin–Maddison, one table each
+- **page 3** — SNP distance ranges within and between groups, then the caveats
+
+Pass `--no-report` to skip it. The figure draws the tree the `monophyly` test writes, so the PDF is skipped automatically if `--tests` does not select that test.
 
 ### The groups file
 
@@ -430,6 +468,48 @@ cladebreaker \
   --run_raxml \
   -profile conda
 ```
+
+---
+
+## Statistical Tests
+
+The `analyze` workflow draws on four published statistics plus one descriptive measure. Each is available on its own through `--tests`.
+
+### Monophyly and its limits
+
+Monophyly is a yes/no answer, and a weak one on its own: with small samples a group can form a clade purely by chance. The `monophyly` test reports, per group, whether it is a clade, how many separate clusters a broken group falls into, and **the names of the tips that break it** — which is the actionable half of a negative answer. Across an ensemble of trees it also reports the fraction in which the group is a clade, which is clade support for the grouping itself.
+
+### Rosenberg's chance-monophyly test
+
+[Rosenberg (2007)](https://doi.org/10.1111/j.1558-5646.2007.00023.x) gives the probability that observed monophyly is a chance outcome of random branching:
+
+```
+P_A(a,b)  = [2 / C(a+b,a)] * [(a+b) / (a(a+1))]     monophyly of one group of size a among b others
+P_AB(a,b) = 2 / [C(a+b,a) * (a+b-1)]                reciprocal monophyly of two groups
+```
+
+`P_A` is reported for every monophyletic group, Holm-adjusted across them. `P_AB` is reported when there are exactly two groups covering every tip and both are clades. When the groups partition the tips, the joint probability that **all k of them** are clades is reported too, from [Zhu, Degnan & Steel (2011)](https://arxiv.org/abs/1101.1311) Theorem 5.1 — the natural test when an outbreak contains several distinct strains.
+
+> **These probabilities depend only on the group sizes, not on the tree.** They are not a measure of clade support or of divergence. They answer one question: is the sample large enough that chance can be excluded? A non-significant result means you need more reference genomes, and the report says how many. Three isolates against three neighbours is roughly the floor for `P_AB < 0.05`.
+
+> **A caveat specific to this pipeline**: the null assumes the lineages are a random draw from one taxon. In a cladebreaker run they are not — WhatsGNU picks the reference genomes *because* they are closest to your isolates, and groups defined after looking at the tree bias these p-values downwards. The report prints this alongside the numbers.
+
+### Slatkin–Maddison migration test
+
+When a group is not strictly monophyletic, [Slatkin & Maddison (1989)](https://doi.org/10.1093/genetics/123.3.603) asks whether the residual mixing is still less than random. The group label is treated as an unordered character and Fitch parsimony gives `s`, the fewest label changes ("migration events") that explain the tree; the labels are then shuffled to build a null. Significantly fewer changes than chance means the groups are structured even though no group is a clade.
+
+Unlike every other test here, **`s` is a property of the unrooted topology**, so rerooting cannot change it. That makes it the safest of the tests when the correct rooting is exactly what you are unsure about.
+
+### SNP separation
+
+Topology alone can miss a group that is a tidy clade sitting a handful of SNPs from its neighbours. From a snp-dists matrix, per group:
+
+```
+ratio_of_means = mean(between) / mean(within)
+gap            = min(between)  / max(within)
+```
+
+A gap above 1 means every pair inside the group is closer than any pair crossing out of it — cleanly separated with no overlap. Unlike the other four, these ratios are **defined by this pipeline, not drawn from the literature**, and the thresholds that matter are organism-specific; read them with the raw distances, which are reported alongside.
 
 ---
 
@@ -538,8 +618,11 @@ Phylogenetic alignment (choose one mode)
 Phylogenetic tree (optional)
     └─ ML inference        → RAxML-NG
 
-Lineage divergence (optional, --run_gsi)
-    └─ Sorting index       → gsi
+Lineage divergence (optional, --run_analysis)
+    ├─ Monophyly + gsi     → clade status, degree of sorting
+    ├─ Chance monophyly    → Rosenberg P_A / P_AB / joint
+    ├─ Residual mixing     → Slatkin-Maddison
+    └─ SNP separation      → snp-dists
 
 Quality reporting
     └─ Aggregate report    → MultiQC
@@ -561,7 +644,9 @@ Quality reporting
 | [Roary](https://github.com/sanger-pathogens/Roary) | Classic rapid pangenome tool; produces a core-gene alignment (container only) |
 | [Snippy](https://github.com/tseemann/snippy) | Reference-based SNP/indel calling from reads or assemblies; Snippy-core merges per-sample VCFs into a core SNP alignment |
 | [RAxML-NG](https://github.com/amkozlov/raxml-ng) | Maximum-likelihood phylogenetic inference from core-gene or core-SNP alignments |
-| [DendroPy](https://dendropy.org/) | Phylogenetic tree parsing and rooting behind the genealogical sorting index |
+| [DendroPy](https://dendropy.org/) | Phylogenetic tree parsing and rooting behind the analyze statistics |
+| [snp-dists](https://github.com/tseemann/snp-dists) | Pairwise SNP distances from a core alignment, for the separation test |
+| [Matplotlib](https://matplotlib.org/) | Renders the PDF report: the tree figure, the result tables and the SNP distance ranges |
 | [MultiQC](https://multiqc.info/) | Aggregates QC outputs from FastQC and other tools into a single HTML report |
 
 ---
@@ -605,6 +690,7 @@ All results are written under `--outdir`. The structure varies slightly dependin
 
 | Directory | Contents |
 |---|---|
+| `analyze/` | `cladebreaker.analyze_report.pdf` (tree + every test, unless `--no-report`), `cladebreaker.analyze_report.txt` (the combined verdict), `cladebreaker.rooted.nwk` (the tree the tests ran on), plus per-test outputs: `.monophyly.tsv` and `.monophyly_clade_breaking.tsv`, `.rosenberg.tsv`, `.slatkin_maddison.tsv`, `.snp_separation.tsv` and `.snp_separation_pairs.tsv`, and the `.dists.tsv` SNP matrix |
 | `gsi/` | `cladebreaker.gsi.tsv` (per-group gsi and p-value), `.gsi.json` (same plus run settings), `.gsi_mqc.tsv` (MultiQC table), `.gsi_per_tree.tsv` (per-topology values, ensembles only), and `gsi_groups.tsv` (the group assignments used, when generated by `--run_gsi`) |
 
 ### Pipeline-wide outputs

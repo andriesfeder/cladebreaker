@@ -27,6 +27,13 @@ include { NCBIGENOMEDOWNLOAD          } from '../modules/nf-core/modules/ncbigen
 
 include { GSI                         } from '../modules/local/gsi/main'
 include { GSI_GROUPS                  } from '../modules/local/gsi/groups'
+include { MONOPHYLY                   } from '../modules/local/analyze/monophyly'
+include { ROSENBERG                   } from '../modules/local/analyze/rosenberg'
+include { SLATKIN_MADDISON            } from '../modules/local/analyze/slatkin_maddison'
+include { SNP_DISTS                   } from '../modules/local/analyze/snp_dists'
+include { SNP_SEPARATION              } from '../modules/local/analyze/snp_separation'
+include { ANALYZE_REPORT              } from '../modules/local/analyze/report'
+include { ANALYZE_PDF                 } from '../modules/local/analyze/pdf'
 
 include { WHATSGNU_MAIN               } from '../modules/local/whatsgnu/main'
 include { WHATSGNU_GETGENOMES         } from '../modules/local/whatsgnu/getgenomes'
@@ -64,9 +71,10 @@ workflow CLADEBREAKER {
     if (params.annotator == 'bakta' && !params.bakta_db) {
         exit 1, "ERROR: --bakta_db <path> is required when --annotator bakta is set."
     }
-    if (params.run_gsi) {
+    if (params.run_gsi || params.run_analysis) {
+        def flag = params.run_analysis ? '--run_analysis' : '--run_gsi'
         if (!params.run_raxml) {
-            exit 1, "ERROR: --run_gsi requires --run_raxml; without it the pipeline builds no tree to analyze."
+            exit 1, "ERROR: ${flag} requires --run_raxml; without it the pipeline builds no tree to analyze."
         }
         if (!(params.gsi_root in ['as-is', 'midpoint', 'outgroup'])) {
             exit 1, "ERROR: --gsi_root must be one of 'as-is', 'midpoint' or 'outgroup' (got '${params.gsi_root}')."
@@ -75,7 +83,7 @@ workflow CLADEBREAKER {
             exit 1, "ERROR: --gsi_root outgroup requires --gsi_outgroup <tip[,tip...]>."
         }
         if (params.gsi_root == 'as-is') {
-            log.warn "--run_gsi is using --gsi_root as-is, but RAxML-NG trees are unrooted and the gsi is undefined on an unrooted tree. Use --gsi_root midpoint or --gsi_root outgroup."
+            log.warn "${flag} is using --gsi_root as-is, but RAxML-NG trees are unrooted and monophyly, the gsi and Rosenberg's tests are all undefined on an unrooted tree. Use --gsi_root midpoint or --gsi_root outgroup. (Slatkin-Maddison is unaffected.)"
         }
     }
     def ch_input = file(params.input)
@@ -178,6 +186,7 @@ workflow CLADEBREAKER {
             ch_versions   = ch_versions.mix(PANAROO.out.versions)
         }
 
+        ch_core_aln = pangenome_aln
         if ( params.run_raxml ) {
             RAXMLNG ( pangenome_aln )
         }
@@ -196,6 +205,7 @@ workflow CLADEBREAKER {
             snippy_core,
             Channel.fromPath( params.ref )
         )
+        ch_core_aln = SNIPPY_CORE.out.aln
         if ( params.run_raxml ) {
             RAXMLNG (
                 SNIPPY_CORE.out.full_aln
@@ -207,7 +217,7 @@ workflow CLADEBREAKER {
     // MODULE: Genealogical sorting index of the input isolates against the
     // reference genomes WhatsGNU selected, on the tree just built
     //
-    if ( params.run_gsi ) {
+    if ( params.run_gsi || params.run_analysis ) {
         ch_query_ids = annotation_input
             .map { meta, assembly -> "${meta.id}\n" }
             .collectFile(name: 'gsi_query_ids.txt', sort: true)
@@ -226,6 +236,44 @@ workflow CLADEBREAKER {
             GSI_GROUPS.out.groups
         )
         ch_versions = ch_versions.mix(GSI.out.versions)
+
+        //
+        // The full decision path: monophyly, then Rosenberg if the groups are
+        // clades or Slatkin-Maddison if they are not, with SNP separation from
+        // whichever alignment this run produced. All of it is cheap next to the
+        // tree, so everything runs and the report picks the leading result.
+        //
+        if ( params.run_analysis ) {
+            MONOPHYLY        ( RAXMLNG.out.phylogeny, GSI_GROUPS.out.groups )
+            ROSENBERG        ( RAXMLNG.out.phylogeny, GSI_GROUPS.out.groups )
+            SLATKIN_MADDISON ( RAXMLNG.out.phylogeny, GSI_GROUPS.out.groups )
+            SNP_DISTS        ( ch_core_aln )
+            SNP_SEPARATION   ( SNP_DISTS.out.distances, GSI_GROUPS.out.groups )
+
+            ch_analysis = GSI.out.json
+                .mix(MONOPHYLY.out.json)
+                .mix(ROSENBERG.out.json)
+                .mix(SLATKIN_MADDISON.out.json)
+                .mix(SNP_SEPARATION.out.json)
+            ANALYZE_REPORT ( ch_analysis.collect() )
+
+            // --no-report arrives camel-cased as params.noReport; --no_report as-is.
+            if ( !(params.no_report || (params.containsKey('noReport') && params.noReport)) ) {
+                ANALYZE_PDF (
+                    ch_analysis.mix(ANALYZE_REPORT.out.json).collect(),
+                    MONOPHYLY.out.rooted_tree,
+                    GSI_GROUPS.out.groups
+                )
+                ch_versions = ch_versions.mix(ANALYZE_PDF.out.versions)
+            }
+
+            ch_versions = ch_versions.mix(MONOPHYLY.out.versions)
+            ch_versions = ch_versions.mix(ROSENBERG.out.versions)
+            ch_versions = ch_versions.mix(SLATKIN_MADDISON.out.versions)
+            ch_versions = ch_versions.mix(SNP_DISTS.out.versions)
+            ch_versions = ch_versions.mix(SNP_SEPARATION.out.versions)
+            ch_versions = ch_versions.mix(ANALYZE_REPORT.out.versions)
+        }
     }
 
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
@@ -257,8 +305,15 @@ workflow CLADEBREAKER {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-    if ( params.run_gsi ) {
+    if ( params.run_gsi || params.run_analysis ) {
         ch_multiqc_files = ch_multiqc_files.mix(GSI.out.mqc.collect().ifEmpty([]))
+    }
+    if ( params.run_analysis ) {
+        ch_multiqc_files = ch_multiqc_files.mix(MONOPHYLY.out.mqc.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ROSENBERG.out.mqc.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(SLATKIN_MADDISON.out.mqc.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(SNP_SEPARATION.out.mqc.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ANALYZE_REPORT.out.mqc.collect().ifEmpty([]))
     }
 
     MULTIQC (

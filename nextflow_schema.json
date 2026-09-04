@@ -375,7 +375,7 @@
             "title": "cladebreaker analyze options",
             "type": "object",
             "fa_icon": "fas fa-project-diagram",
-            "description": "Options for the `cladebreaker analyze` workflow (--workflow ANALYZE) and for running the genealogical sorting index on the tree built by the main pipeline.",
+            "description": "Options for the `cladebreaker analyze` workflow (--workflow ANALYZE) and for running the same statistics on the tree built by the main pipeline.",
             "help_text": "The genealogical sorting index (gsi) of Cummings, Neel & Shaw (2008) quantifies how far each labeled group on a rooted tree has sorted towards exclusive ancestry, from 0 (ancestry fully mixed with the other groups) to 1 (monophyletic). Significance comes from permuting the group labels across the tips.\n\nRun it standalone on any rooted tree with `--workflow ANALYZE --tree <tree.nwk> --groups <groups.tsv>`, or add `--run_gsi` to a normal pipeline run to score your isolates against the reference genomes WhatsGNU selected.",
             "properties": {
                 "tree": {
@@ -397,6 +397,51 @@
                     "description": "Run the genealogical sorting index on the RAxML-NG tree built by the pipeline.",
                     "help_text": "Requires `--run_raxml`. Labels your input isolates as one group and the reference genomes downloaded from NCBI as another, then scores how far each group has sorted. Results land in `<outdir>/gsi/` and in the MultiQC report.",
                     "fa_icon": "fas fa-project-diagram"
+                },
+                "tests": {
+                    "type": "string",
+                    "default": "auto",
+                    "description": "Which tests to run: 'auto' (all of them), or a comma-separated subset.",
+                    "help_text": "Valid names are gsi, monophyly, rosenberg, slatkin_maddison and snp_separation.\n\nUnder the default `auto` every test runs and the report decides which result leads: Rosenberg's chance-monophyly test where the groups are clades, Slatkin-Maddison's migration test where they are not. Running them all costs very little next to building the tree, and keeps every intermediate available.\n\n`snp_separation` needs `--alignment` or `--distances`; under `auto` it is skipped when neither is given, but naming it explicitly without one is an error.",
+                    "fa_icon": "fas fa-vials"
+                },
+                "alignment": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Core alignment, used to compute SNP distances for the separation test.",
+                    "help_text": "snp-dists is run over this to build a pairwise SNP distance matrix. In the main pipeline the alignment is taken automatically from whichever mode ran (the core-gene alignment in pangenome mode, or snippy-core's in reference mode).",
+                    "fa_icon": "fas fa-align-left"
+                },
+                "distances": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "A precomputed snp-dists matrix, used instead of --alignment.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "run_analysis": {
+                    "type": "boolean",
+                    "description": "Run the full analyze decision path on the tree built by the pipeline.",
+                    "help_text": "Requires `--run_raxml`. Runs monophyly, Rosenberg, the gsi, Slatkin-Maddison and SNP separation on your isolates against the reference genomes WhatsGNU selected, then writes a combined report to `<outdir>/analyze/`. Supersedes `--run_gsi`, which runs the genealogical sorting index alone.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "gsi_alpha": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Significance level used by the report and by Rosenberg's minimum sample size.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "gsi_max_joint_groups": {
+                    "type": "integer",
+                    "default": 14,
+                    "description": "Skip the joint monophyly probability beyond this many groups.",
+                    "help_text": "The joint probability of Zhu, Degnan & Steel (2011) sums over rooted binary trees on k leaves. It is evaluated by recursion over subsets, which is O(3^k), so it stays tractable well past the (2k-3)!! trees a naive enumeration would need -- but not indefinitely. Per-group P_A is unaffected and is always reported.",
+                    "fa_icon": "fas fa-sitemap"
+                },
+                "no_report": {
+                    "type": "boolean",
+                    "description": "Skip rendering the PDF report. `--no-report` is accepted too.",
+                    "help_text": "The analyze workflow writes a PDF containing the rooted tree the statistics were computed on, followed by each test's results. Pass this to skip it and keep only the text, TSV and JSON outputs.\n\nThe figure draws the tree written by the `monophyly` test, so the PDF is skipped automatically when `--tests` does not select it.",
+                    "fa_icon": "fas fa-file-pdf"
                 },
                 "gsi_root": {
                     "type": "string",

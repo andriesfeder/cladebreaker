@@ -39,6 +39,21 @@
 * [Genealogical sorting index](https://pubmed.ncbi.nlm.nih.gov/18564379/)
     > Cummings MP, Neel MC, Shaw KL. A genealogical approach to quantifying lineage divergence. Evolution. 2008 Sep;62(9):2411-22. doi: 10.1111/j.1558-5646.2008.00442.x. Epub 2008 Jun 16. PubMed PMID: 18564379.
 
+* [Rosenberg's tests for chance monophyly](https://pubmed.ncbi.nlm.nih.gov/17348942/)
+    > Rosenberg NA. Statistical tests for taxonomic distinctiveness from observations of monophyly. Evolution. 2007 Feb;61(2):317-23. doi: 10.1111/j.1558-5646.2007.00023.x. PubMed PMID: 17348942.
+
+* [Joint monophyly of k groups](https://doi.org/10.1016/j.tpb.2011.05.002)
+    > Zhu S, Degnan JH, Steel M. Clades, clans and reciprocal monophyly under neutral evolutionary models. Theor Popul Biol. 2011 Sep;80(2):118-24. doi: 10.1016/j.tpb.2011.05.002. arXiv:1101.1311.
+
+* [Slatkin-Maddison migration test](https://pubmed.ncbi.nlm.nih.gov/2599370/)
+    > Slatkin M, Maddison WP. A cladistic measure of gene flow inferred from the phylogenies of alleles. Genetics. 1989 Nov;123(3):603-13. doi: 10.1093/genetics/123.3.603. PubMed PMID: 2599370.
+
+* [snp-dists](https://github.com/tseemann/snp-dists)
+    > Seemann T. snp-dists: pairwise SNP distance matrix from a FASTA sequence alignment. https://github.com/tseemann/snp-dists
+
+* [Matplotlib](https://doi.org/10.1109/MCSE.2007.55)
+    > Hunter JD. Matplotlib: A 2D graphics environment. Comput Sci Eng. 2007;9(3):90-95. doi: 10.1109/MCSE.2007.55.
+
 * [DendroPy](https://pubmed.ncbi.nlm.nih.gov/20421198/)
     > Sukumaran J, Holder MT. DendroPy: a Python library for phylogenetic computing. Bioinformatics. 2010 Jun 15;26(12):1569-71. doi: 10.1093/bioinformatics/btq228. PubMed PMID: 20421198.
 
