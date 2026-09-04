@@ -21,6 +21,9 @@
 * [Prokka](https://pubmed.ncbi.nlm.nih.gov/24642063/)
     > Seemann T. Prokka: rapid prokaryotic genome annotation. Bioinformatics. 2014 Jul 15;30(14):2068-9. doi: 10.1093/bioinformatics/btu153. PubMed PMID: 24642063.
 
+* [Bakta](https://pubmed.ncbi.nlm.nih.gov/34739369/)
+    > Schwengers O, Jelonek L, Dieckmann MA, Beyvers S, Blom J, Goesmann A. Bakta: rapid and standardized annotation of bacterial genomes via alignment-free sequence identification. Microb Genom. 2021 Nov;7(11):000685. doi: 10.1099/mgen.0.000685. PubMed PMID: 34739369.
+
 * [Panaroo](https://pubmed.ncbi.nlm.nih.gov/32762896/)
     > Tonkin-Hill G, MacAlasdair N, Gillies C, Weimann A, Rocha EPC, Bentley SD, Parkhill J, Page AJ, Getz A, Wordsworth S, Coll F. Producing polished prokaryotic pangenomes with the Panaroo pipeline. Genome Biol. 2020 Jul 29;21(1):180. doi: 10.1186/s13059-020-02090-4. PubMed PMID: 32762896.
 
@@ -53,6 +56,9 @@
 
 * [Matplotlib](https://doi.org/10.1109/MCSE.2007.55)
     > Hunter JD. Matplotlib: A 2D graphics environment. Comput Sci Eng. 2007;9(3):90-95. doi: 10.1109/MCSE.2007.55.
+
+* [Biopython](https://pubmed.ncbi.nlm.nih.gov/19304878/)
+    > Cock PJ, Antao T, Chang JT, Chapman BA, Cox CJ, Dalke A, Friedberg I, Hamelryck T, Kauff F, Wilczynski B, de Hoon MJ. Biopython: freely available Python tools for computational molecular biology and bioinformatics. Bioinformatics. 2009 Jun 1;25(11):1422-3. doi: 10.1093/bioinformatics/btp163. PubMed PMID: 19304878.
 
 * [DendroPy](https://pubmed.ncbi.nlm.nih.gov/20421198/)
     > Sukumaran J, Holder MT. DendroPy: a Python library for phylogenetic computing. Bioinformatics. 2010 Jun 15;26(12):1569-71. doi: 10.1093/bioinformatics/btq228. PubMed PMID: 20421198.

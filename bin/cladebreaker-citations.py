@@ -115,6 +115,78 @@ CITATIONS = [
         ),
     },
     {
+        "tool": "Bakta",
+        "citation": (
+            "Schwengers O, Jelonek L, Dieckmann MA, Beyvers S, Blom J, Goesmann A (2021). "
+            "Bakta: rapid and standardized annotation of bacterial genomes via "
+            "alignment-free sequence identification. Microbial Genomics 7:000685. "
+            "https://doi.org/10.1099/mgen.0.000685"
+        ),
+    },
+    {
+        "tool": "genealogical sorting index",
+        "citation": (
+            "Cummings MP, Neel MC, Shaw KL (2008). A genealogical approach to "
+            "quantifying lineage divergence. Evolution 62:2411-2422. "
+            "https://doi.org/10.1111/j.1558-5646.2008.00442.x"
+        ),
+    },
+    {
+        "tool": "Rosenberg's tests for chance monophyly",
+        "citation": (
+            "Rosenberg NA (2007). Statistical tests for taxonomic distinctiveness "
+            "from observations of monophyly. Evolution 61:317-323. "
+            "https://doi.org/10.1111/j.1558-5646.2007.00023.x"
+        ),
+    },
+    {
+        "tool": "joint monophyly of k groups",
+        "citation": (
+            "Zhu S, Degnan JH, Steel M (2011). Clades, clans and reciprocal monophyly "
+            "under neutral evolutionary models. Theoretical Population Biology 80:118-124. "
+            "https://doi.org/10.1016/j.tpb.2011.05.002"
+        ),
+    },
+    {
+        "tool": "Slatkin-Maddison migration test",
+        "citation": (
+            "Slatkin M, Maddison WP (1989). A cladistic measure of gene flow inferred "
+            "from the phylogenies of alleles. Genetics 123:603-613. "
+            "https://doi.org/10.1093/genetics/123.3.603"
+        ),
+    },
+    {
+        "tool": "snp-dists",
+        "citation": (
+            "Seemann T. snp-dists: pairwise SNP distance matrix from a FASTA "
+            "sequence alignment. https://github.com/tseemann/snp-dists"
+        ),
+    },
+    {
+        "tool": "DendroPy",
+        "citation": (
+            "Sukumaran J, Holder MT (2010). DendroPy: a Python library for "
+            "phylogenetic computing. Bioinformatics 26:1569-1571. "
+            "https://doi.org/10.1093/bioinformatics/btq228"
+        ),
+    },
+    {
+        "tool": "Biopython",
+        "citation": (
+            "Cock PJ, Antao T, Chang JT, et al. (2009). Biopython: freely available "
+            "Python tools for computational molecular biology and bioinformatics. "
+            "Bioinformatics 25:1422-1423. https://doi.org/10.1093/bioinformatics/btp163"
+        ),
+    },
+    {
+        "tool": "Matplotlib",
+        "citation": (
+            "Hunter JD (2007). Matplotlib: A 2D graphics environment. "
+            "Computing in Science & Engineering 9:90-95. "
+            "https://doi.org/10.1109/MCSE.2007.55"
+        ),
+    },
+    {
         "tool": "MultiQC",
         "citation": (
             "Ewels P, Magnusson M, Lundin S, Käller M (2016). MultiQC: summarize "
